@@ -1,0 +1,15 @@
+{
+  "volume": 50,
+  "setupDone": false,
+  "admin": {
+    "global": {
+      "latency": 100
+    },
+    "server": {
+      "ip": "localhost",
+      "username": "admin",
+      "password": null
+    },
+    "clients": []
+  }
+}

@@ -16,7 +16,7 @@ const defaultData: Data = {
     clients: []
   } }; 
 
-const dbFile = 'data/db.json';
+const dbFile = 'db.json';
 
 
 function stripPasswords(data: Data) {
@@ -99,9 +99,7 @@ class LowdbAdapter {
 const adapter = new LowdbAdapter();
 
 async function getDb() {
-  if (!adapter.db.data) {
-    await adapter.initialize();
-  }
+  await adapter.initialize()
   return adapter;
 }
 
