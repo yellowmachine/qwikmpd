@@ -22,10 +22,10 @@ export const Primary: Story = {
 
 export const WithoutCurrentElapsed: Story = {
   args: {
-    currentElapsed: 30,
+    currentElapsed: null,
     total: 100,
     volume: 30,
-    state: 'pause'
+    state: 'stop'
   },
   render: (props: PlayerProps) => {
     return <Player {...props} />;

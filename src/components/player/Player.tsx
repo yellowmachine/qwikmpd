@@ -18,16 +18,16 @@ export const Player = component$(( props: PlayerProps ) => {
     const elapsed = useSignal(props.currentElapsed ?? 0);    
 
     useVisibleTask$(({ track, cleanup }) => {
-        const currentElapsed = track(() => props.currentElapsed);
+        const [state, currentElapsed] = track(() => [ props.state, props.currentElapsed]);
     
         elapsed.value = currentElapsed ?? 0;
      
-        if (currentElapsed == null || props.state === 'stop' || props.state === 'pause') {
+        if (currentElapsed == null || state === 'stop' || state === 'pause') {
           return;
         }
     
         const interval = setInterval(() => {
-          elapsed.value++;
+          elapsed.value = Math.min(elapsed.value + 1, props.total);
         }, 1000);
     
         cleanup(() => clearInterval(interval));

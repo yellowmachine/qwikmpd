@@ -17,16 +17,18 @@ export const List: Story = {
         title: 'Stairway to Heaven',
         artist: 'Led Zeppelin',
         time: '05:00',
+        uri: 'led-zeppelin/stairway-to-heaven'
       },
       {
         title: 'Enjoy the silence',
         artist: 'Depeche Mode',
         time: '03:30',
+        uri: 'depeche-mode/enjoy-the-silence'
       }
     ]
 
   },
   render: (props: { songs: TSong[] }) => (
-    <SongList songs={props.songs} />
+    <SongList {...props} />
   )
 };
