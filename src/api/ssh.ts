@@ -29,9 +29,8 @@ export async function executeSSH(command: string, host: Host, secret: string) {
 export const executeSSHServer = async (command: string, secret: string) => {
     const db = await getDb();
     const data = await db.getDataWithPassword();
-    const server = data.admin?.server;
-  
-    if(!server) throw new Error('Server not found');
+    const server = data.admin.server;
+    //if(!server) throw new Error('Server not found');
   
     return await executeSSH(command, server, secret);
 }

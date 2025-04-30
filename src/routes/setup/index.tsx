@@ -2,25 +2,8 @@ import { component$ } from '@builder.io/qwik';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import type { InitialValues } from '@modular-forms/qwik';
 import { formAction$, useForm, valiForm$ } from '@modular-forms/qwik';
-
+import { Host as SetupSchema } from '~/server/schemas'; 
 import * as v from 'valibot';
- 
-const SetupSchema = v.object({
-  ip: v.pipe(
-    v.string(),
-    v.nonEmpty('Please enter server IP.'),
-    v.ip(),
-  ),
-  username: v.pipe(
-    v.string(),
-    v.nonEmpty('Please enter your username.'),
-  ),
-  password: v.pipe(
-    v.string(),
-    v.nonEmpty('Please enter your password.'),
-    v.minLength(8, 'Your password must have 8 characters or more.'),
-  ),
-});
 
 type SetupForm = v.InferInput<typeof SetupSchema>;
 

@@ -1,20 +1,10 @@
 import { access } from 'node:fs/promises';
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
-import type { Settings, SettingsWithPassword } from './schemas';
+import type { Settings } from './schemas';
 
 
 export type Data = { volume: number, setupDone: boolean, admin: Settings };
-type DataWithPassword = Omit<Data, 'admin'> & { admin: SettingsWithPassword };
-
-const defaultData: Data = { 
-  volume: 50,
-  setupDone: false, 
-  admin: {
-    global: { latency: 100 },
-    server: { ip: 'localhost', username: 'admin', password: null },
-    clients: []
-  } }; 
 
 const dbFile = 'db.json';
 
@@ -37,29 +27,29 @@ function stripPasswords(data: Data) {
 }
 
 class LowdbAdapter {
-  db: Low<Data>;
+  db: Low<Data | null>;
   
   constructor(filename = dbFile) {
-    this.db = new Low(new JSONFile<Data>(filename), defaultData);
+    this.db = new Low(new JSONFile<Data | null>(filename), null);
   }
 
   async load() {
     await this.db.read();
   }
 
-  async getData(): Promise<Data> {
+  async getData() {
     await this.load();
-    return stripPasswords(this.db.data) as Data;
+    return stripPasswords(this.db.data!);
   }
 
-  async getDataWithPassword(): Promise<DataWithPassword> { // password are returned encrypted
+  async getDataWithPassword(): Promise<Data> { // password are returned encrypted
     await this.load();
-    return this.db.data as DataWithPassword;
+    return this.db.data as Data;
   }
 
-  async setData(data: Partial<DataWithPassword>) { // password come encrypted
+  async setData(data: Partial<Data>) { // password come encrypted
     await this.load();
-    this.db.data = { ...this.db.data, ...data };
+    this.db.data = { ...this.db.data!, ...data };
     await this.db.write();
   }
 
@@ -89,18 +79,19 @@ class LowdbAdapter {
       await access(dbFile); 
       await this.db.read();
     } catch (err) {
-      this.db.data = defaultData;
+      this.db.data = null;
       await this.db.write();
     }
   }
   
 }
 
-const adapter = new LowdbAdapter();
+let adapter: LowdbAdapter | null = null;
 
-async function getDb() {
-  await adapter.initialize()
+export async function getDb() {
+  if(!adapter){
+    adapter = new LowdbAdapter();
+    await adapter.initialize();
+  }
   return adapter;
 }
-
-export { getDb };

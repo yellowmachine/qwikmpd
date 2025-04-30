@@ -1,11 +1,12 @@
-import { $, component$, Slot, useSignal, useOnDocument, useVisibleTask$ } from "@builder.io/qwik";
+import { $, component$, Slot, useSignal, useOnDocument, useVisibleTask$, useStore } from "@builder.io/qwik";
 import { server$, type RequestHandler } from "@builder.io/qwik-city";
-import { getMpdClient } from "~/server/get-mpd-client";
+import { type PlayerData, type QueueData, getMpdClient } from "~/server/get-mpd-client";
 
 
 export const streamFromServer = server$(async function* () {
-  const mpd = await getMpdClient();
-  for await (const msg of mpd.subscribe()) {
+  const mpd = await getMpdClient(this);
+
+  for await (const msg of await mpd.subscribe()) {
     yield msg;
   }
 });
@@ -18,12 +19,15 @@ export const onGet: RequestHandler = async ({ cacheControl }) => {
 };
 
 export default component$(() => {
-  const message = useSignal<string[]>([]);
+  
   const isConnected = useSignal(false);
   const reconnectAttempts = useSignal(0);
   const maxReconnectAttempts = 5;
   const isConnecting = useSignal(false);
   const response = useSignal<ReturnType<typeof streamFromServer> | null>(null);
+
+  const state = useStore<PlayerData>({volume: 5, state: 'paused'});
+  const queue = useStore<QueueData>({queue: [], currentSong: ''});
 
   const connectToStream = $(async () => {
 
@@ -33,17 +37,17 @@ export default component$(() => {
     try {
       console.log('Iniciando stream...');
       response.value = streamFromServer();
-      console.log('Stream iniciado');
 
       isConnected.value = true;
       reconnectAttempts.value = 0;
-      message.value = [];
 
       for await (const value of await response.value) {
-        message.value = [...message.value, value];
-        
-        if (message.value.length > 100) {
-          message.value.shift();
+        if(value.type === 'player') {
+            state.volume = value.data.volume;
+            state.state = value.data.state;
+        }else if(value.type === 'queue') {
+            queue.queue = value.data.queue;
+            queue.currentSong = value.data.currentSong;
         }
       }
     } catch (error) {
@@ -86,9 +90,7 @@ export default component$(() => {
         Conectado: {isConnected.value ? 'Sí' : 'No'} | Intentos de reconexión: {reconnectAttempts.value}
       </div>
       <div>
-        {message.value.map((msg, i) => (
-          <div key={i}>{msg}</div>
-        ))}
+        Estado: {state.state} | Volumen: {state.volume}
       </div>
       <Slot />
     </div>
