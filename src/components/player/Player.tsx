@@ -1,15 +1,37 @@
-import { component$, $, type Signal } from '@builder.io/qwik';
+import { component$, $, useVisibleTask$, useSignal } from '@builder.io/qwik';
 import { LuPlay, LuPause } from "@qwikest/icons/lucide";
 import { mpdServerApi as playerApi } from '~/server/mpd';
 import ProgressBar from './ProgressBar';
 import PlayerButton from './PlayerButton';
+import { VolumeBar } from './VolumeBar';
+
 
 export interface PlayerProps {
-    currentElapsed: Signal<number | null>;
+    currentElapsed: number | null;
     total: number;
+    volume: number;
+    state: 'play' | 'stop' | 'pause';
 }
 
 export const Player = component$(( props: PlayerProps ) => {
+
+    const elapsed = useSignal(props.currentElapsed ?? 0);    
+
+    useVisibleTask$(({ track, cleanup }) => {
+        const currentElapsed = track(() => props.currentElapsed);
+    
+        elapsed.value = currentElapsed ?? 0;
+     
+        if (currentElapsed == null || props.state === 'stop' || props.state === 'pause') {
+          return;
+        }
+    
+        const interval = setInterval(() => {
+          elapsed.value++;
+        }, 1000);
+    
+        cleanup(() => clearInterval(interval));
+      });
 
     const play = $(async () => {
         await playerApi.play();
@@ -19,10 +41,14 @@ export const Player = component$(( props: PlayerProps ) => {
         await playerApi.pause();
     });
 
+    const setVolume = $(async (value: number) => {
+        await playerApi.setVolume(value);
+    })
+
     return (
         <>
             <div class="flex items-center gap-4 border-2 rounded-md p-4 w-max bg-white text-orange-500 dark:bg-orange-500 dark:text-white">
-                {props.currentElapsed.value ?
+                {props.currentElapsed ?
                 <PlayerButton onClick$={pause}>
                     <LuPause />
                 </PlayerButton>
@@ -32,8 +58,11 @@ export const Player = component$(( props: PlayerProps ) => {
                 </PlayerButton>
                 } 
             </div>
-            <ProgressBar total={props.total} currentElapsed={props.currentElapsed} />
+            <VolumeBar volume={props.volume} onVolumeChange={setVolume} />
+            <ProgressBar total={props.total} currentElapsed={elapsed} />
         </>
         
     );
 });
+
+
