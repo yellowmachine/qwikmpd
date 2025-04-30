@@ -1,6 +1,6 @@
 import { $, component$, Slot, useSignal, useOnDocument, useVisibleTask$, useStore } from "@builder.io/qwik";
 import { server$, type RequestHandler } from "@builder.io/qwik-city";
-import { type PlayerData, type QueueData, getMpdClient } from "~/server/get-mpd-client";
+import { type StatusData, type QueueData, getMpdClient } from "~/server/mpd";
 
 
 export const streamFromServer = server$(async function* () {
@@ -26,7 +26,7 @@ export default component$(() => {
   const isConnecting = useSignal(false);
   const response = useSignal<ReturnType<typeof streamFromServer> | null>(null);
 
-  const state = useStore<PlayerData>({volume: 5, state: 'paused'});
+  const state = useStore<Partial<StatusData>>({volume: 5, state: 'pause'});
   const queue = useStore<QueueData>({queue: [], currentSong: ''});
 
   const connectToStream = $(async () => {
@@ -42,7 +42,7 @@ export default component$(() => {
       reconnectAttempts.value = 0;
 
       for await (const value of await response.value) {
-        if(value.type === 'player') {
+        if(value.type === 'status') {
             state.volume = value.data.volume;
             state.state = value.data.state;
         }else if(value.type === 'queue') {

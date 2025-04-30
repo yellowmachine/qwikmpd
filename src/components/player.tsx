@@ -1,7 +1,7 @@
 import { component$ } from '@builder.io/qwik';
 import { ActionButton } from './action-button/action-button';
 import { $ } from '@builder.io/qwik';
-import { getMpdClient } from '~/server/get-mpd-client';
+import { getMpdClient } from '~/server/mpd';
 import { server$ } from '@builder.io/qwik-city';
 
 const play = server$(async function(){
