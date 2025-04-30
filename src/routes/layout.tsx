@@ -2,23 +2,11 @@ import { $, component$, Slot, useSignal, useOnDocument, useVisibleTask$ } from "
 import { server$, type RequestHandler } from "@builder.io/qwik-city";
 import { getMpdClient } from "~/server/get-mpd-client";
 
+
 export const streamFromServer = server$(async function* () {
   const mpd = await getMpdClient();
-  const { id, queue } = await mpd.addListener();
-
-  let running = true;
-  try {
-    while (running) {
-      const msg = await queue.pop();
-      try {
-        yield msg;
-      } catch (error) {
-        console.error(error);
-        running = false;
-      }
-    }
-  } finally {
-    mpd.removeListener(id);
+  for await (const msg of mpd.subscribe()) {
+    yield msg;
   }
 });
 
@@ -34,25 +22,26 @@ export default component$(() => {
   const isConnected = useSignal(false);
   const reconnectAttempts = useSignal(0);
   const maxReconnectAttempts = 5;
-  const controller = useSignal<AbortController | null>(null);
   const isConnecting = useSignal(false);
+  const response = useSignal<ReturnType<typeof streamFromServer> | null>(null);
 
   const connectToStream = $(async () => {
+
     if (isConnecting.value) return; // Evitar conexiones simultáneas
     isConnecting.value = true;
 
     try {
-      controller.value?.abort();
-      controller.value = new AbortController();
-      const response = await streamFromServer(controller.value.signal);
+      console.log('Iniciando stream...');
+      response.value = streamFromServer();
+      console.log('Stream iniciado');
 
       isConnected.value = true;
       reconnectAttempts.value = 0;
       message.value = [];
 
-      for await (const value of response) {
+      for await (const value of await response.value) {
         message.value = [...message.value, value];
-        // Opcional: limitar tamaño del array
+        
         if (message.value.length > 100) {
           message.value.shift();
         }
@@ -62,25 +51,32 @@ export default component$(() => {
       isConnected.value = false;
       if (reconnectAttempts.value < maxReconnectAttempts) {
         reconnectAttempts.value++;
-        setTimeout(connectToStream, 2000);
+        handleReconnect();
       }
     } finally {
       isConnecting.value = false;
     }
   });
 
-  useOnDocument('visibilitychange', $(() => {
+  const handleReconnect = $(() => {
+    if (reconnectAttempts.value < maxReconnectAttempts) {
+      reconnectAttempts.value++;
+      setTimeout(connectToStream, 2000);
+    }
+  });
+
+  useOnDocument('visibilitychange', $(async () => {
     if (document.visibilityState === 'visible') {
       connectToStream();
     } else {
-      controller.value?.abort();
+      (await response.value)?.return();
       isConnected.value = false;
     }
   }));
 
   useVisibleTask$(({ cleanup }) => {
     connectToStream();
-    cleanup(() => controller.value?.abort());
+    cleanup(async () => (await response.value)?.return());
   });
 
   return (

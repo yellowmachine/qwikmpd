@@ -73,29 +73,12 @@ class Mpd{
           console.error('Error en reconexión:', error);
           setTimeout(() => this.tryReconnect(), 2000);
         }
-      }
-      
-
-    private waitForConnection(): Promise<void> {
-        return new Promise((resolve, reject) => {
-          const check = () => {
-            if (this.client && !this.connecting) {
-              resolve();
-            } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-              reject(new Error('No se pudo conectar a MPD'));
-            } else {
-              setTimeout(check, 100); // Reintentar cada 100ms
-            }
-          };
-          check();
-        });
-      }
-      
+      }      
 
     async addListener(){
         // Esperar hasta que la conexión esté lista
         if (!this.client || this.connecting) {
-            await this.waitForConnection(); // función que espera o rechaza según reconexión
+            await this.initialize();
         }
         const id = this.id++;
         const queue = new WaitQueue<string>();
@@ -111,6 +94,18 @@ class Mpd{
             q.push(msg);
         }
     }
+
+    async *subscribe() {
+        const { id, queue } = await this.addListener();
+        
+        try {
+          while (true) {
+            yield await queue.pop();
+          }
+        } finally {
+          this.removeListener(id);
+        }
+      }
 }
 
 
@@ -119,7 +114,7 @@ let mpdClient: Mpd | null = null;
 export const getMpdClient = async () => {
     if(!mpdClient){
         mpdClient = new Mpd();
-        await mpdClient.initialize();
+        //await mpdClient.initialize();
     }
     return mpdClient;
 }
