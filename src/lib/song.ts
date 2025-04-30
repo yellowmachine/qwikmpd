@@ -21,3 +21,10 @@ export function formatSongArray(stdout: string) {
     });
     return songs;
 }
+
+export function formatTime(seconds: number | null | undefined) {
+    if (!seconds) return '';
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60);
+    return `${min}:${sec.toString().padStart(2, '0')}`;
+  }
