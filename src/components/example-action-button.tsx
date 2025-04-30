@@ -1,5 +1,5 @@
 import { component$ } from '@builder.io/qwik';
-import { ActionButton } from './action-button';
+import { ActionButton } from './action-button/action-button';
 import { myClientAction } from './action';
 
 export default component$(() => {

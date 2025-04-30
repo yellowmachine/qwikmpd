@@ -1,6 +1,6 @@
 import { component$, useStore, $, Slot, type QRL } from '@builder.io/qwik';
 
-interface ActionButtonProps {
+export interface ActionButtonProps {
   action: QRL<(event: Event) => Promise<void>>;
   successMessage?: string;
 }
