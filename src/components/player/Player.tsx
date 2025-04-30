@@ -5,7 +5,7 @@ import ProgressBar from './ProgressBar';
 import PlayerButton from './PlayerButton';
 
 export interface PlayerProps {
-    currentElapsed: Signal<number>;
+    currentElapsed: Signal<number | null>;
     total: number;
 }
 
