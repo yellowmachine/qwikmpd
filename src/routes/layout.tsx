@@ -1,7 +1,10 @@
 import { $, component$, Slot, useSignal, useOnDocument, useVisibleTask$, useStore } from "@builder.io/qwik";
 import { server$, type RequestHandler } from "@builder.io/qwik-city";
 import { type StatusData, type QueueData, getMpdClient } from "~/server/mpd";
-
+import {
+  useContextProvider,
+  createContextId,
+} from '@builder.io/qwik';
 
 export const streamFromServer = server$(async function* () {
   const mpd = await getMpdClient(this);
@@ -17,6 +20,8 @@ export const onGet: RequestHandler = async ({ cacheControl }) => {
     maxAge: 5,
   });
 };
+
+export const storesContext = createContextId<{queue: QueueData, state: StatusData}>('stores');
 
 export default component$(() => {
   
@@ -82,6 +87,8 @@ export default component$(() => {
     connectToStream();
     cleanup(async () => (await response.value)?.return());
   });
+
+  useContextProvider(storesContext, {queue, state});
 
   return (
     <div>

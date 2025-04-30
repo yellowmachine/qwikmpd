@@ -1,8 +1,9 @@
-import { RequestEventBase } from '@builder.io/qwik-city';
+import { RequestEvent, RequestEventBase, server$ } from '@builder.io/qwik-city';
 import mpdApi, { type MPDApi } from 'mpd-api';
 import WaitQueue from 'wait-queue';
 import { formatSongArray, Song } from '~/lib/song';
 import { executeSSHServer } from '~/server/ssh';
+
 
 export type MPDClient = MPDApi.ClientAPI;
 
@@ -35,18 +36,22 @@ class Mpd{
                 this.reconnectAttempts = 0;
                 //this.connecting = false;
 
+                const statusData = this.client?.api.status as unknown as StatusData;
+                this.broadcast({type: 'status', data: statusData});
+
+                const queueData = await queueMsg(secret);
+                this.broadcast({type: 'queue', data: queueData});
+
                 this.client.on('system', async (eventName: string) => {
                     if(eventName === 'player' || eventName === 'mixer'){
                         const statusData = this.client?.api.status as unknown as StatusData;
                         this.broadcast({type: 'status', data: statusData});
 
-                        const queueData = await queueMsg(secret);
-                        this.broadcast({type: 'queue', data: queueData});
+                        //const queueData = await queueMsg(secret);
+                        //this.broadcast({type: 'queue', data: queueData});
                     }else if(eventName === 'playlist'){
                         const queueData = await queueMsg(secret);
                         this.broadcast({type: 'queue', data: queueData});
-                    }else if(eventName === 'mixer'){
-                        
                     }
                 });
         
@@ -279,3 +284,60 @@ export type StatusData = {
     nextsong: number;
     nextsongid: number;
   };
+
+// 1. Define el tipo con los métodos públicos que quieres exponer
+type MpdMethods = {
+  play: () => Promise<void>;
+  pause: () => Promise<void>;
+  stop: () => Promise<void>;
+  next: () => Promise<void>;
+  previous: () => Promise<void>;
+  seek: (seconds: number) => Promise<void>;
+  setVolume: (volume: number) => Promise<void>;
+  add: (uri: string) => Promise<void>;
+  remove: (uri: string) => Promise<void>;
+  clear: () => Promise<void>;
+  load: (name: string) => Promise<void>;
+  playHere: (path: string) => Promise<void>;
+  // Agrega más métodos si es necesario
+};
+
+// 2. Extraemos las claves para controlar qué métodos exponer
+const exposedMethods = Object.keys({
+  play: null,
+  pause: null,
+  stop: null,
+  next: null,
+  previous: null,
+  seek: null,
+  setVolume: null,
+  add: null,
+  remove: null,
+  clear: null,
+  load: null,
+  playHere: null,
+}) as (keyof MpdMethods)[];
+
+// 3. Tipo para las funciones server$ que exponen esos métodos
+type ServerFunction<F extends (...args: any[]) => any> = (
+  ...args: Parameters<F>
+) => ReturnType<F>;
+
+// 4. Definimos el tipo para el proxy con funciones server$
+type ServerMpdApi = {
+  [K in keyof MpdMethods]: ServerFunction<MpdMethods[K]>;
+};
+
+// 5. Creamos el proxy que genera automáticamente funciones server$
+export const mpdServerApi: ServerMpdApi = new Proxy({} as ServerMpdApi, {
+  get(_, prop: string) {
+    if (!exposedMethods.includes(prop as keyof MpdMethods)) {
+      throw new Error(`Método ${prop} no está expuesto en mpdServerApi`);
+    }
+    return server$(async function (this: RequestEventBase<{env: Env}>, ...args: any[]) {
+      const mpd: Mpd = await getMpdClient(this);
+      // @ts-ignore: accedemos dinámicamente al método
+      return mpd[prop](...args);
+    });
+  },
+});
