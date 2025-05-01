@@ -6,6 +6,7 @@ import { Host as SetupSchema } from '~/server/schemas';
 import * as v from 'valibot';
 import { getDb } from '~/server/db';
 import { encrypt } from '~/server/crypt';
+import crypto from 'crypto';
 
 
 type SetupForm = v.InferInput<typeof SetupSchema>;
@@ -18,7 +19,11 @@ export const useFormLoader = routeLoader$<InitialValues<SetupForm>>(() => ({
  
 const setup = server$(async function(values){
   const db = await getDb();
-  const password = encrypt(values.password, this.env.get('SECRET')!);
+  const key = crypto.randomBytes(32);
+
+  const secret = this.env.get('SECRET')!;
+  console.log(secret);
+  const password = encrypt(key, values.password);
   return await db.setSetupDone({...values, password});
 })
  
@@ -35,13 +40,8 @@ export default component$(() => {
     
     const result = v.safeParse(SetupSchema, values);
     if(result.success){
-      await setup(result);
+      await setup(values);
       navigate('/queue');  
-    }else{
-      //result.issues.forEach((issue) => {
-      //  console.log(issue);
-        //setError(form, v.getDotPath(issue) as 'ip' | 'username' | 'password', issue.message);
-      //});
     }
   });
  

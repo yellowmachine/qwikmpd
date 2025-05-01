@@ -1,9 +1,7 @@
 import { component$, Slot } from "@builder.io/qwik";
 import { type RequestHandler } from "@builder.io/qwik-city";
+import { getDb } from "~/server/db";
 
-function isSetupDone() {
-  return false;
-}
 
 export const onRequest: RequestHandler = async ({ redirect, url }) => {
   // Evita la redirección en la propia página de configuración
@@ -11,9 +9,11 @@ export const onRequest: RequestHandler = async ({ redirect, url }) => {
     return;
   }
 
-  if (!isSetupDone()) {
+  const db = await getDb();
+  if (!await db.getSetupDone()) {
     throw redirect(308, '/setup');
   }
+
 };
 
 export const onGet: RequestHandler = async ({ cacheControl }) => {
