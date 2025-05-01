@@ -50,7 +50,7 @@ export default component$(() => {
         if(value.type === 'status') {
             state.volume = value.data.volume;
             state.state = value.data.state;
-        }else if(value.type === 'queue') {
+        }else {
             queue.queue = value.data.queue;
             queue.currentSong = value.data.currentSong;
         }
@@ -83,6 +83,7 @@ export default component$(() => {
     }
   }));
 
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ cleanup }) => {
     connectToStream();
     cleanup(async () => (await response.value)?.return());

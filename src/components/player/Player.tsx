@@ -17,6 +17,7 @@ export const Player = component$(( props: PlayerProps ) => {
 
     const elapsed = useSignal(props.currentElapsed ?? 0);    
 
+    // eslint-disable-next-line qwik/no-use-visible-task
     useVisibleTask$(({ track, cleanup }) => {
         const [state, currentElapsed] = track(() => [ props.state, props.currentElapsed]);
     

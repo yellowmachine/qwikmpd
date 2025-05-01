@@ -3,7 +3,7 @@ import { routeLoader$ } from '@builder.io/qwik-city';
 import type { InitialValues } from '@modular-forms/qwik';
 import { formAction$, useForm, valiForm$ } from '@modular-forms/qwik';
 import { Host as SetupSchema } from '~/server/schemas'; 
-import * as v from 'valibot';
+import type * as v from 'valibot';
 
 type SetupForm = v.InferInput<typeof SetupSchema>;
 

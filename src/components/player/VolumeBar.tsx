@@ -17,6 +17,7 @@ export const VolumeBar = component$(( {volume, onVolumeChange} : VolumeBarProps)
   const container = useSignal<HTMLElement>();
 
   // Actualiza el volumen externo si cambia la prop
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     internalVolume.value = volume;
     tempVolume.value = volume;
@@ -30,16 +31,18 @@ export const VolumeBar = component$(( {volume, onVolumeChange} : VolumeBarProps)
     return event.clientY;
   });
 
+  
   // Maneja el inicio del drag
   const startDrag = $((event: MouseEvent | TouchEvent) => {
     dragging.value = true;
-    window.addEventListener('mousemove', onDrag as any);
-    window.addEventListener('mouseup', stopDrag as any);
-    window.addEventListener('touchmove', onDrag as any);
-    window.addEventListener('touchend', stopDrag as any);
+    //window.addEventListener('mousemove', onDrag as any);
+    //window.addEventListener('mouseup', stopDrag as any);
+    //window.addEventListener('touchmove', onDrag as any);
+    //window.addEventListener('touchend', stopDrag as any);
     event.preventDefault();
   });
 
+  /*
   // Maneja el drag
   const onDrag = $(async (event: MouseEvent | TouchEvent) => {
     if (!dragging.value) return;
@@ -56,12 +59,13 @@ export const VolumeBar = component$(( {volume, onVolumeChange} : VolumeBarProps)
       dragging.value = false;
       internalVolume.value = tempVolume.value;
       onVolumeChange?.(internalVolume.value);
-      window.removeEventListener('mousemove', onDrag as any);
-      window.removeEventListener('mouseup', stopDrag as any);
-      window.removeEventListener('touchmove', onDrag as any);
-      window.removeEventListener('touchend', stopDrag as any);
+      //window.removeEventListener('mousemove', onDrag as any);
+      //window.removeEventListener('mouseup', stopDrag as any);
+      //window.removeEventListener('touchmove', onDrag as any);
+      //window.removeEventListener('touchend', stopDrag as any);
     }
   });
+  */
 
   // Maneja click en la barra interior
   const handleVolumeClick = $(async (event: MouseEvent | TouchEvent) => {

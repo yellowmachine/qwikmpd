@@ -31,6 +31,7 @@ class Mpd{
         try {
             if (!this.client) {
                 //this.connecting = true;
+                console.log('Conectando MPD...');
                 this.client = await mpdApi.connect({ host: this.mpdServer!, port: 6600 });
                 console.log('MPD listo para recibir eventos.');
                 this.reconnectAttempts = 0;
@@ -214,6 +215,7 @@ export async function queueMsg(secret: string): Promise<QueueData> {
       const currentSong = await executeSSHServer('mpc current -f "%file%"', secret);
       
       msg = {queue, currentSong};
+      //msg = {queue: [], currentSong: ''};
     } catch {
       msg = {queue: [], currentSong: ''};
     }

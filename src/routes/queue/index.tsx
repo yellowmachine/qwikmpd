@@ -4,7 +4,7 @@ import {
 } from '@builder.io/qwik';
 import { storesContext } from '../layout';
 import { SongList } from '~/components/song/SongList';
-import Player from '~/components/player';
+import { Player } from '~/components/player/Player';
 import { IsPlaying } from '~/components/player/IsPlaying';
 
 export default component$(() => {
@@ -12,7 +12,7 @@ export default component$(() => {
     return (
       <>
         <IsPlaying isPlaying={state.state === 'play'} />
-        <Player />
+        <Player state='stop' currentElapsed={0} total={0} volume={0} />
         <div>Volumen en Child: {state.volume}</div>
         <div>Canción actual: {queue.currentSong}</div>
         <SongList songs={queue.queue} />

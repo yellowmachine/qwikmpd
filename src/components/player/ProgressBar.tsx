@@ -15,6 +15,8 @@ export default component$(( {total, currentElapsed} : ProgressBarProps) => {
     });
 
     const onChange = $(async (event: Event) => {
+        //console.log(event);
+        //setVolume(Number((event.target as HTMLInputElement).value));
         const newElapsed = Number((event.target as HTMLInputElement).value);
         await playerApi.seek(newElapsed);
     });

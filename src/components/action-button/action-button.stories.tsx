@@ -10,8 +10,8 @@ type Story = StoryObj<ActionButtonProps>;
 
 export default meta;
 
-const ok = $(() => {});
-const error = $(() => {
+const ok = $(async () => {});
+const error = $(async () => {
   throw 'error';
 })
 
@@ -19,8 +19,8 @@ export const Success: Story = {
   args: {
     
   },
-  render: (props) => (
-    <ActionButton action={ok} successMessage="Action executed" {...props}>
+  render: (props: ActionButtonProps) => (
+    <ActionButton {...props} action={ok} successMessage="Action executed">
         <button class="px-4 py-2 bg-orange-600 text-white rounded cursor-pointer">
             this will be ok!
         </button>
@@ -32,8 +32,8 @@ export const Error: Story = {
     args: {
       
     },
-    render: (props) => (
-      <ActionButton action={error} successMessage="Action executed" {...props}>
+    render: (props: ActionButtonProps) => (
+      <ActionButton {...props} action={error} successMessage="Action executed">
        <button class="px-4 py-2 bg-red-600 text-white rounded cursor-pointer">
        this will be an error!
         </button>

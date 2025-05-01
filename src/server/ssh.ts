@@ -1,4 +1,4 @@
-import { NodeSSH } from 'node-ssh';
+//import { NodeSSH } from 'node-ssh';
 import { getDb } from '~/server/db';
 import { decrypt } from '~/server/crypt';
 
@@ -6,6 +6,7 @@ export type Host = {ip: string, username: string, password: string}
 
 
 export async function executeSSH(command: string, host: Host, secret: string) {
+  return ''
   const ssh = new NodeSSH();
   try {
     await ssh.connect({
