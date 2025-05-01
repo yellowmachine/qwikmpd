@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "storybook-framework-qwik";
-import Library from "./Library";
+import {Library} from "./Library";
 
 const meta: Meta = {
   component: Library,
@@ -17,5 +17,5 @@ export const Primary: Story = {
     return (
         <Library  />
     )
-}
+  }
 };

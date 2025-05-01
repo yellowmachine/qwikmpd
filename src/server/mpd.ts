@@ -280,7 +280,7 @@ export interface AudioFileMetadata {
   duration: number;
 }
 
-type LsInfo = {playlist: [], file: AudioFileMetadata[], directory: string[]};
+export type LsInfo = {playlist: [], file: AudioFileMetadata[], directory: string[]};
 
 type Format = {
   sample_rate: number;
@@ -439,7 +439,7 @@ type ServerFunction<F extends (...args: any[]) => any> = (
 ) => ReturnType<F>;
 
 // 4. Definimos el tipo para el proxy con funciones server$
-type ServerMpdApi = {
+export type ServerMpdApi = {
   [K in keyof MpdMethods]: ServerFunction<MpdMethods[K]>;
 };
 

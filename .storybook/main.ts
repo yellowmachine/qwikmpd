@@ -6,6 +6,7 @@ const config: StorybookConfig = {
     name: "storybook-framework-qwik",
   },
   core: {
+    builder: '@storybook/builder-vite',
     renderer: "storybook-framework-qwik",
   },
   stories: [
@@ -15,6 +16,9 @@ const config: StorybookConfig = {
   ],
 
   viteFinal: async (config: any) => {
+    
+    config.resolve.alias['#mpd'] = '/src/server/mpd.mock.ts'
+    //console.log(config.resolve);
     return config;
   },
 };
