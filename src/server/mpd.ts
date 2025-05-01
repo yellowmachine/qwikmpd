@@ -1,4 +1,4 @@
-import { RequestEvent, RequestEventBase, server$ } from '@builder.io/qwik-city';
+import { RequestEventBase, server$ } from '@builder.io/qwik-city';
 import mpdApi, { type MPDApi } from 'mpd-api';
 import WaitQueue from 'wait-queue';
 import { formatSongArray, Song } from '~/lib/song';
@@ -22,6 +22,14 @@ class Mpd{
         this.mpdServer = mpdServer
     }
 
+    async getQueueMsg(){
+        const list = await this.client?.api.queue.info() as AudioFile[];
+        const status = await this.client?.api.status.get() as StatusData;
+        const current = list.find(item => item.pos === status?.song);
+        
+        return {queue: formatSongArray(list), currentSong: current?.file || ''};
+    }
+
     async initialize(secret: string) {
       if (this.initializingPromise) {
         return this.initializingPromise;
@@ -40,7 +48,7 @@ class Mpd{
                 const statusData = this.client?.api.status as unknown as StatusData;
                 this.broadcast({type: 'status', data: statusData});
 
-                const queueData = await queueMsg(secret);
+                const queueData = await this.getQueueMsg();
                 this.broadcast({type: 'queue', data: queueData});
 
                 this.client.on('system', async (eventName: string) => {
@@ -51,8 +59,8 @@ class Mpd{
                         //const queueData = await queueMsg(secret);
                         //this.broadcast({type: 'queue', data: queueData});
                     }else if(eventName === 'playlist'){
-                        const queueData = await queueMsg(secret);
-                        this.broadcast({type: 'queue', data: queueData});
+                        //const queueData = await queueMsg(secret);
+                        //this.broadcast({type: 'queue', data: queueData});
                     }
                 });
         
@@ -176,23 +184,19 @@ class Mpd{
         return null;
     }
 
-    async list(secret: string, path: string){
-        const mpcPlaylist = await executeSSHServer('mpc -f "%artist% - %title% - %id% - %file% - %time%" listall "' + path + '"', secret);
-        const files = formatSongArray(mpcPlaylist).filter(item => path !== '' && item.uri.startsWith(path));
-        const currentSong = await executeSSHServer('mpc current -f "%file%"', secret);
+    async list(path: string){
+        const list = await this.client?.api.db.lsinfo(path) as {title?: string}[];
+        const status = await this.client?.api.status.get() as StatusData;
+        const current = list.find(item => item.title === status.currentSong.title);
             
-        const result = await this.client?.api.db.listall(path) as ListAllItem[];
-        const directories = result.
-        filter(item => typeof item.directory === 'string' && item.directory.startsWith(path)).
-        map(item => item.directory).filter(item => item !== undefined)
+        //const directories = list.
+        //  filter(item => typeof item.directory === 'string' && item.directory.startsWith(path)).
+        //  map(item => item.directory).filter(item => item !== undefined)
         
-        return {files, directories, currentSong};
+        return {files: list, currentSong: current?.title || ''};
     }
     
 }
-
-type ListAllItem = { file?: string; directory?: string };
-
 
 export type QueueData = {queue: Song[], currentSong: string};
 type QueueEvent = { type: 'queue', data: QueueData}
@@ -207,24 +211,26 @@ interface Env {
     [key: string]: string;
 }
 
-export async function queueMsg(secret: string): Promise<QueueData> { 
-    let msg;
-    try {
-      const mpcPlaylist = await executeSSHServer('mpc -f "%artist% \\ %title% \\ %id% \\ %file% \\ %time%" playlist', secret);
-      const queue = formatSongArray(mpcPlaylist);
-      const currentSong = await executeSSHServer('mpc current -f "%file%"', secret);
-      
-      msg = {queue, currentSong};
-      //msg = {queue: [], currentSong: ''};
-    } catch {
-      msg = {queue: [], currentSong: ''};
-    }
-    return msg;
-  }
-  
-export async function playlistMsg(secret: string){
-    return await queueMsg(secret);
+type Format = {
+  sample_rate: number;
+  bits: number;
+  channels: number;
+  sample_rate_short: Record<string, any>; // No se especifica la forma exacta, por eso se usa Record
+  original_value: string;
 }
+
+export type AudioFile = {
+  file: string;
+  last_modified: string; // ISO 8601 string, podría usarse también Date si se parsea
+  format: Format;
+  artist: string;
+  title: string;
+  time: number;
+  duration: number;
+  pos: number;
+  id: number;
+}
+
   
 export const getMpdClient = async (requestEvent: RequestEventBase<{env: Env}>) => {
 
@@ -236,11 +242,12 @@ export const getMpdClient = async (requestEvent: RequestEventBase<{env: Env}>) =
         mpdClient.setMpdServer(mpdServer);
         await mpdClient.initialize(secret);
     }
-
+    return mpdClient;
+    /*
     return new Proxy(mpdClient, {
         get(target, prop, receiver) {
           if (prop === 'list') {
-            return (path: string) => target.list(secret, path);
+            return (path: string) => target.list(path);
           }
 
           const value = Reflect.get(target, prop, receiver);
@@ -250,6 +257,7 @@ export const getMpdClient = async (requestEvent: RequestEventBase<{env: Env}>) =
           return value;
         }
       });
+      */
 }
 
 export type StatusData = {
@@ -286,6 +294,7 @@ export type StatusData = {
     nextsong: number;
     nextsongid: number;
   };
+
 
 // 1. Define el tipo con los métodos públicos que quieres exponer
 type MpdMethods = {

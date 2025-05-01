@@ -1,3 +1,5 @@
+import { AudioFile } from "~/server/mpd";
+
 export type Song = {
     artist: string;
     title: string;
@@ -12,14 +14,16 @@ export function formatSong(line: string) {
     return { artist: artist || '', title: title || uri || '', id: parseInt(id), uri: uri || '', time: time || '' };
 }
 
-export function formatSongArray(stdout: string) {
-    if(stdout.trim() === '') return [];
-    
-    const lines = stdout.trim().split('\n');
-    const songs = lines.map(line => {
-        return formatSong(line);
-    });
-    return songs;
+export function formatSongArray(audios: AudioFile[]) {
+    return audios.map(audio => (
+        {
+            artist: audio.artist,
+            title: audio.title,
+            id: audio.id,
+            uri: audio.file,
+            time: formatTime(audio.time)
+        }
+    )) as Song[]
 }
 
 export function formatTime(seconds: number | null | undefined) {
