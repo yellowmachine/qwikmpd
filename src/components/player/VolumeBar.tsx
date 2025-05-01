@@ -7,10 +7,10 @@ function correctVolume(value: number): number {
 
 export interface VolumeBarProps {
   volume: number;
-  onVolumeChange?: QRL<(v: number) => void>;
+  onVolumeChange$?: QRL<(v: number) => void>;
 }
 
-export const VolumeBar = component$(( {volume, onVolumeChange} : VolumeBarProps) => {
+export const VolumeBar = component$(( {volume, onVolumeChange$} : VolumeBarProps) => {
   const internalVolume = useSignal(volume);
   const tempVolume = useSignal(volume);
   const dragging = useSignal(false);
@@ -74,7 +74,7 @@ export const VolumeBar = component$(( {volume, onVolumeChange} : VolumeBarProps)
     if (rect) {
       internalVolume.value = correctVolume(((rect.bottom - y) / rect.height) * 100);
       tempVolume.value = internalVolume.value;
-      onVolumeChange?.(internalVolume.value);
+      onVolumeChange$?.(internalVolume.value);
     }
   });
 
@@ -86,7 +86,7 @@ export const VolumeBar = component$(( {volume, onVolumeChange} : VolumeBarProps)
     if (rect) {
       internalVolume.value = correctVolume(((rect.bottom - y) / rect.height) * 100);
       tempVolume.value = internalVolume.value;
-      onVolumeChange?.(internalVolume.value);
+      onVolumeChange$?.(internalVolume.value);
     }
   });
 

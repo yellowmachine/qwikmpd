@@ -3,7 +3,7 @@ import { LuPlay, LuPause } from "@qwikest/icons/lucide";
 import { mpdServerApi as playerApi } from '~/server/mpd';
 import ProgressBar from './ProgressBar';
 import PlayerButton from './PlayerButton';
-import { VolumeBar } from './VolumeBar';
+import { Volume } from '../volume/Volume';
 
 
 export interface PlayerProps {
@@ -57,9 +57,9 @@ export const Player = component$(( props: PlayerProps ) => {
                 <PlayerButton onClick$={play}>
                     <LuPlay />
                 </PlayerButton>
-                } 
+                }
+                <Volume volume={props.volume} onVolumeChange$={setVolume} /> 
             </div>
-            <VolumeBar volume={props.volume} onVolumeChange={setVolume} />
             <ProgressBar total={props.total} currentElapsed={elapsed} />
         </>
         

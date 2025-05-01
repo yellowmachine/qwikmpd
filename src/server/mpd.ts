@@ -18,8 +18,8 @@ class Mpd{
     private mpdServer: string | null = null;
     private initializingPromise: Promise<void> | null = null;
 
-    setMpdServer(mpdServer: string){
-        this.mpdServer = mpdServer
+    constructor(mpdServer: string){
+      this.mpdServer = mpdServer
     }
 
     async getQueueMsg(){
@@ -238,8 +238,7 @@ export const getMpdClient = async (requestEvent: RequestEventBase<{env: Env}>) =
 
     if(!mpdClient){
         const mpdServer = requestEvent.env.get('MPD_SERVER')!;
-        mpdClient = new Mpd();
-        mpdClient.setMpdServer(mpdServer);
+        mpdClient = new Mpd(mpdServer);
         await mpdClient.initialize(secret);
     }
     return mpdClient;
