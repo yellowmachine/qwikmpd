@@ -9,9 +9,11 @@ export interface SongListProps {
 export const SongList = component$<SongListProps>(( {songs} ) => {
     return (
         <>
-            <div class="border border-2 border-brand-300">
+            <div class="">
                 {songs.map((song) => (
-                    <Song song={song} currentSong={null} key={song.uri} />
+                    <div class="border border-2 border-brand-300 mb-2" key={song.uri}>
+                        <Song song={song} currentSong={null} />
+                    </div>
                 ))}
             </div>
         </>

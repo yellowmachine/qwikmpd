@@ -16,7 +16,7 @@ export const Base = component$(({history, directories, files, goPath, goBack}: B
     return (
         <>
             {history.length > 1 && 
-                <button class="" onClick$={goBack} >[..]</button>
+                <button class="mb-2 cursor-pointer bg-brand-200 hover:bg-brand-300" onClick$={goBack} >[..]</button>
             }
             {directories.map((dir) => (
                 <div key={dir} class="mb-2 cursor-pointer bg-brand-200 hover:bg-brand-300">
