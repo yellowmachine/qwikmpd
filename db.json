@@ -7,9 +7,9 @@
     },
     "clients": [],
     "server": {
-      "ip": "192.168.1.56",
+      "ip": "127.0.0.1",
       "username": "miguel",
-      "password": "8118b24230e7b2118db1779188a04858:db5a72490ff4663cb94bcb297b843e5843cb9879abccb4c50c55482ba197166c"
+      "password": "1b36daf5e1bf989e84fc876be33f9666:7f5ce79b786e8512f4f47860400a61be7fe3f1fcf14d1ccddcb51e7b164f8345"
     }
   }
 }
