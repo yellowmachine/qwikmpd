@@ -12,7 +12,7 @@ export default component$(() => {
     return (
       <>
         <IsPlaying isPlaying={state.state === 'play'} />
-        <Player state='stop' currentElapsed={0} total={0} volume={0} />
+        <Player state={state.state} currentElapsed={state.time?.elapsed} total={state.time?.total} volume={state.volume} />
         <div>Volumen en Child: {state.volume}</div>
         <div>Canción actual: {queue.currentSong}</div>
         <SongList songs={queue.queue} />
