@@ -1,9 +1,12 @@
-import { component$ } from '@builder.io/qwik';
-import { routeLoader$ } from '@builder.io/qwik-city';
-import type { InitialValues } from '@modular-forms/qwik';
-import { formAction$, useForm, valiForm$ } from '@modular-forms/qwik';
+import { $, component$, type QRL } from '@builder.io/qwik';
+import { routeLoader$, server$, useNavigate } from '@builder.io/qwik-city';
+import type { InitialValues, SubmitHandler } from '@modular-forms/qwik';
+import { useForm, valiForm$ } from '@modular-forms/qwik';
 import { Host as SetupSchema } from '~/server/schemas'; 
-import type * as v from 'valibot';
+import * as v from 'valibot';
+import { getDb } from '~/server/db';
+import { encrypt } from '~/server/crypt';
+
 
 type SetupForm = v.InferInput<typeof SetupSchema>;
 
@@ -13,21 +16,38 @@ export const useFormLoader = routeLoader$<InitialValues<SetupForm>>(() => ({
   password: '',
 }));
  
-export const useFormAction = formAction$((values) => {
-  // Runs on server
-  return values;
-}, valiForm$(SetupSchema));
+const setup = server$(async function(values){
+  const db = await getDb();
+  const password = encrypt(values.password, this.env.get('SECRET')!);
+  return await db.setSetupDone({...values, password});
+})
  
 export default component$(() => {
+  const navigate = useNavigate();
+
   const [, { Form, Field }] = useForm<SetupForm>({
     loader: useFormLoader(),
-    action: useFormAction(),
     validate: valiForm$(SetupSchema),
+  });
+
+  const handleSubmit: QRL<SubmitHandler<SetupForm>> = $(async (values, event) => {
+    event.preventDefault();
+    
+    const result = v.safeParse(SetupSchema, values);
+    if(result.success){
+      await setup(result);
+      navigate('/queue');  
+    }else{
+      //result.issues.forEach((issue) => {
+      //  console.log(issue);
+        //setError(form, v.getDotPath(issue) as 'ip' | 'username' | 'password', issue.message);
+      //});
+    }
   });
  
   return (
     <div class="flex flex-col items-center justify-center h-screen">
-    <Form class="border border-brand-300 border-2 px-4 py-8">
+    <Form onSubmit$={handleSubmit} class="border border-brand-300 border-2 px-4 py-8">
       <h1 class="text-brand-500 text-3xl">Setup</h1>
       <Field name="ip">
         {(field, props) => (
