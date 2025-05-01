@@ -4,14 +4,14 @@ import { mpdServerApi as playerApi } from '~/server/mpd';
 
 
 export interface ProgressBarProps {
-    currentElapsed: Signal<number | null>;
+    elapsed: Signal<number | null>;
     total: number;
 }
 
-export default component$(( {total, currentElapsed} : ProgressBarProps) => {
+export default component$(( {total, elapsed} : ProgressBarProps) => {
     
     const onInput = $(async (event: Event) => {
-        currentElapsed.value = Number((event.target as HTMLInputElement).value);
+        elapsed.value = Number((event.target as HTMLInputElement).value);
     });
 
     const onChange = $(async (event: Event) => {
@@ -28,16 +28,16 @@ export default component$(( {total, currentElapsed} : ProgressBarProps) => {
                     min="0"
                     max={total}
                     step="1"
-                    value={currentElapsed.value ?? 0}
+                    value={elapsed.value ?? 0}
                     class="w-full h-2 bg-orange-200 rounded-lg appearance-none cursor-pointer dark:bg-orange-500"
                     onInput$={onInput}
                     onChange$={onChange}
                 />
 
                 <div class="flex justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    <span>{formatTime(currentElapsed.value)} / {formatTime(total)}</span>
+                    <span>{formatTime(elapsed.value)} / {formatTime(total)}</span>
                     {total && 
-                        <span>{formatTime(total - (currentElapsed.value ?? 0))}</span>
+                        <span>{formatTime(total - (elapsed.value ?? 0))}</span>
                     }
                 </div>
             </div>

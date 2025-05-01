@@ -24,14 +24,14 @@ export const Song = component$<SongProps>(( {song, currentSong} ) => {
                     <span class={`font-medium text-orange-600`}>{song.title}</span>
                     <span class="text-xs text-blue-400 ml-2">({song.artist})</span>
                     <span class="text-blue-500">
-                        {formatTime(currentSong.elapsed)} / {formatTime(currentSong.total)}
+                        {formatTime(currentSong?.elapsed)} / {formatTime(currentSong?.total)}
                     </span>
                     </div>
                     <div class="h-2 mt-2 bg-blue-100 rounded">
                         <div
                             class="h-2 bg-blue-500 rounded transition-all"
                             style={{
-                                width: currentSong.total
+                                width: currentSong?.total
                                 ? `${Math.min(100, ((currentSong.elapsed || 0) / currentSong.total) * 100)}%`
                                 : '0%',
                             }}
@@ -51,7 +51,7 @@ export const Song = component$<SongProps>(( {song, currentSong} ) => {
                         ({song.artist})
                     </span>
                     <span class="text-xs text-gray-400">
-                        {song.time}
+                        {formatTime(song.time)}
                     </span>
                     {show.value ? <SongPopUp /> : null}  
                 </button>

@@ -1,6 +1,6 @@
-import { $, component$, Slot, useSignal, useOnDocument, useVisibleTask$, useStore } from "@builder.io/qwik";
+import { $, component$, Slot, useSignal, useOnDocument, useVisibleTask$, useStore, type Signal } from "@builder.io/qwik";
 import { server$  } from "@builder.io/qwik-city";
-import { type StatusData, type QueueData, getMpdClient } from "~/server/mpd";
+import { type StatusData, type QueueData, getMpdClient, emptyStatus } from "~/server/mpd";
 import {
   useContextProvider,
   createContextId,
@@ -15,7 +15,7 @@ export const streamFromServer = server$(async function* () {
 });
 
 
-export const storesContext = createContextId<{queue: QueueData, state: StatusData}>('stores');
+export const storesContext = createContextId<{queue: QueueData, state: StatusData, elapsed: Signal<number>}>('stores');
 
 export default component$(() => {
   
@@ -25,7 +25,7 @@ export default component$(() => {
   const isConnecting = useSignal(false);
   const response = useSignal<ReturnType<typeof streamFromServer> | null>(null);
 
-  const state = useStore<Partial<StatusData>>({volume: 5, state: 'pause'});
+  const state = useStore<StatusData>(emptyStatus);
   const queue = useStore<QueueData>({queue: [], currentSong: ''});
 
   const connectToStream = $(async () => {
@@ -83,7 +83,31 @@ export default component$(() => {
     cleanup(async () => (await response.value)?.return());
   });
 
-  useContextProvider(storesContext, {queue, state});
+  const elapsed = useSignal(state.time?.elapsed || 0);
+  useContextProvider(storesContext, {queue, state, elapsed});
+
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ track, cleanup }) => {
+    const [statePlayer] = track(() => [ state.state]);
+
+    elapsed.value = state.time?.elapsed || 0;
+ 
+    //time?.elapsed == null ||
+    if (statePlayer === 'stop' || statePlayer === 'pause') {
+        if(statePlayer === 'stop') 
+          elapsed.value = 0;
+      return;
+    }
+
+    const interval = setInterval(() => {
+      elapsed.value++;
+    }, 1000);
+
+    cleanup(() => {
+      //elapsed.value = 0;
+      clearInterval(interval)
+    });
+  });
 
   return (
     <div>

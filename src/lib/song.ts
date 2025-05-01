@@ -3,9 +3,8 @@ import { AudioFile } from "~/server/mpd";
 export type Song = {
     artist: string;
     title: string;
-    id: number;
-    uri: string;
-    time: string;
+    uri?: string;
+    time: string | number;
 };
 
 
@@ -26,7 +25,8 @@ export function formatSongArray(audios: AudioFile[]) {
     )) as Song[]
 }
 
-export function formatTime(seconds: number | null | undefined) {
+export function formatTime(seconds: number | null | undefined | string) {
+    if(typeof seconds === 'string') return seconds;
     if (!seconds) return '';
     const min = Math.floor(seconds / 60);
     const sec = Math.floor(seconds % 60);

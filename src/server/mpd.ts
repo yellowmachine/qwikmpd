@@ -2,10 +2,49 @@ import { RequestEventBase, server$ } from '@builder.io/qwik-city';
 import mpdApi, { type MPDApi } from 'mpd-api';
 import WaitQueue from 'wait-queue';
 import { formatSongArray, Song } from '~/lib/song';
-import { executeSSHServer } from '~/server/ssh';
-
 
 export type MPDClient = MPDApi.ClientAPI;
+
+export function toBeIncluded(entry: string) {
+  if(entry.startsWith('/')){
+    entry = entry.slice(1);
+  } 
+  if(entry !== '' && !entry.includes('/'))
+    return entry;
+  return null;
+}
+
+export function getFirstLevel(array: {directory: string, file: string[]}[], ruta: string) {
+  // Inicializa sets para evitar duplicados
+  const dirs = new Set();
+  const files = new Set();
+
+  // Normaliza la ruta para evitar problemas de barra final
+  const rutaNorm = ruta.replace(/\/$/, "");
+
+  array.forEach(entry => {
+    if (entry.directory === rutaNorm) {
+      (entry.file || []).forEach(f => {
+        let rel = f.slice(rutaNorm.length);
+        const include = toBeIncluded(rel);
+        if(include) 
+          files.add(include);
+      });
+    }
+    
+    if (entry.directory.startsWith(rutaNorm)) {
+      let resto = entry.directory.slice(rutaNorm.length);
+      const include = toBeIncluded(resto);
+      if(include)
+        dirs.add(include);
+    }
+  });
+
+  return {
+    directories: Array.from(dirs) as string[],
+    files: Array.from(files) as string[]
+  };
+}
 
 
 class Mpd{
@@ -185,15 +224,11 @@ class Mpd{
     }
 
     async list(path: string){
-        const list = await this.client?.api.db.lsinfo(path) as {title?: string}[];
+        const list = await this.client?.api.db.lsinfo(path) as LsInfo;
         const status = await this.client?.api.status.get() as StatusData;
-        const current = list.find(item => item.title === status.currentSong.title);
-            
-        //const directories = list.
-        //  filter(item => typeof item.directory === 'string' && item.directory.startsWith(path)).
-        //  map(item => item.directory).filter(item => item !== undefined)
+        const current = list.file.find(item => item.title === status.currentSong?.title);
         
-        return {files: list, currentSong: current?.title || ''};
+        return { directories: list.directory, files: list.file, currentSong: current?.title};
     }
     
 }
@@ -210,6 +245,42 @@ let mpdClient: Mpd | null = null;
 interface Env {
     [key: string]: string;
 }
+
+interface AudioFileFormat {
+  container?: string;
+  codec?: string;
+  codecProfile?: string;
+  tagTypes?: string[];
+  duration?: number;
+  bitrate?: number;
+  sampleRate?: number;
+  bitsPerSample?: number;
+  lossless?: boolean;
+  numberOfChannels?: number;
+  creationTime?: Date;
+  modificationTime?: Date;
+  trackGain?: number;
+  albumGain?: number;
+}
+
+export interface AudioFileMetadata {
+  file: string;
+  last_modified: string; // ISO 8601 string
+  format: AudioFileFormat;
+  title: string;
+  artist: string;
+  album: string;
+  genre: string;
+  albumartist: string;
+  composer: string;
+  disc: number;
+  date: string;
+  track: number;
+  time: number;
+  duration: number;
+}
+
+type LsInfo = {playlist: [], file: AudioFileMetadata[], directory: string[]};
 
 type Format = {
   sample_rate: number;
@@ -260,7 +331,7 @@ export const getMpdClient = async (requestEvent: RequestEventBase<{env: Env}>) =
 }
 
 export type StatusData = {
-    currentSong: {
+    currentSong?: {
       title: string,
       artist: string
     },
@@ -275,7 +346,7 @@ export type StatusData = {
     state: 'play' | 'stop' | 'pause';
     song: number;
     songid: number;
-    time: {
+    time?: {
       elapsed: number;
       total: number;
     };
@@ -294,6 +365,38 @@ export type StatusData = {
     nextsongid: number;
   };
 
+export const emptyStatus: StatusData = {
+    volume: 75,
+    repeat: false,
+    random: true,
+    single: false,
+    consume: false,
+    playlist: 2,
+    playlistlength: 10,
+    mixrampdb: 0,
+    state: 'play',
+    song: 5,
+    songid: 123,
+    time: {
+      elapsed: 120,
+      total: 360
+    },
+    elapsed: 120.5,
+    bitrate: "192",
+    audio: {
+      sampleRate: 48000,
+      bits: 24,
+      channels: 2,
+      sample_rate_short: {
+        value: 48,
+        unit: 'kHz'
+      }
+    },
+    nextsong: 6,
+    nextsongid: 124
+  };
+  
+
 
 // 1. Define el tipo con los métodos públicos que quieres exponer
 type MpdMethods = {
@@ -309,6 +412,7 @@ type MpdMethods = {
   clear: () => Promise<void>;
   load: (name: string) => Promise<void>;
   playHere: (path: string) => Promise<void>;
+  list: (path: string) => Promise<LsInfo>;
   // Agrega más métodos si es necesario
 };
 
@@ -326,6 +430,7 @@ const exposedMethods = Object.keys({
   clear: null,
   load: null,
   playHere: null,
+  list: null
 }) as (keyof MpdMethods)[];
 
 // 3. Tipo para las funciones server$ que exponen esos métodos
