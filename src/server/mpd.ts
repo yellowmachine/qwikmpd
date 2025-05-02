@@ -228,7 +228,7 @@ class Mpd{
         const status = await this.client?.api.status.get() as StatusData;
         const current = list.file.find(item => item.title === status.currentSong?.title);
         
-        return { directories: list.directory.map(d => d.directory), files: list.file, currentSong: current?.title};
+        return { directories: list.directory.map(d => d.directory), files: formatSongArray(list.file), file: list.file, currentSong: current?.title};
     }
     
 }

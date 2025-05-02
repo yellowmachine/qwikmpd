@@ -17,7 +17,7 @@ export const Song = component$<SongProps>(( {song, currentSong} ) => {
 
     return (
         <>
-            { song.uri === currentSong?.uri ?  
+            { song.uri &&song.uri === currentSong?.uri ?  
                 <div class="col-span-full">
                     <div class="flex items-center gap-2">
                     <span class="text-blue-600 font-bold animate-pulse">●</span>

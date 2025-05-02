@@ -1,23 +1,23 @@
 import { $, component$, useSignal } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
-import { type AudioFileMetadata, getMpdClient } from "#mpd";
+import { getMpdClient } from "#mpd";
 import { SongList } from "../song/SongList";
+import type { Song } from "~/lib/song";
 
 
 const loadPath = server$(async function(path: string){
     const result = await (await getMpdClient(this)).list(path);
     return {file: result.files, directory: result.directories};
-    //return await mpdServerApi.list(path);
 })
 
 export interface LibraryProps {
-    initialData: {file: AudioFileMetadata[], directory: string[]}
+    initialData: {file: Song[], directory: string[]}
 }
 
 export const Library = component$(({initialData}: LibraryProps) => {
 
     const history = useSignal<string[]>(['']);
-    const files = useSignal<AudioFileMetadata[]>(initialData.file);
+    const files = useSignal<Song[]>(initialData.file);
     const directories = useSignal<string[]>(initialData.directory);
 
     const goPath = $(async (path: string) => {
