@@ -58,6 +58,7 @@
     "storybook": "^8.2.8",
     "storybook-framework-qwik": "^0.4.0",
     "tailwindcss": "^4.0.0",
+    "testing@latest": "link:@builder.io/qwik-city/testing@latest",
     "typescript": "5.4.5",
     "undici": "*",
     "vite": "5.3.5",

@@ -1,19 +1,22 @@
-import { routeLoader$ } from "@builder.io/qwik-city";
-import { mpdServerApi } from "#mpd";
 import { Library } from "~/components/library/Library";
 import { component$ } from '@builder.io/qwik';
+import { type RequestEventLoader, routeLoader$ } from "@builder.io/qwik-city";
+import { getMpdClient } from "#mpd";
 
-
-export const useInitialData = routeLoader$(async () => {
-    return await mpdServerApi.list('');
+export const useLibraryData = routeLoader$(async (request: RequestEventLoader) => {
+    const result = await (await getMpdClient(request)).list('');
+    return {file: result.files, directory: result.directories};
 });
+   
 
 export default component$(() => {
+
+    const initialData = useLibraryData();
 
     return (
         <>
             <h1>Library</h1>
-            <Library />
+            <Library initialData={initialData.value} />
         </>
     );
 })

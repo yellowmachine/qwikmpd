@@ -1,20 +1,24 @@
 import { $, component$, useSignal } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
-import { type AudioFileMetadata, mpdServerApi } from "#mpd";
-import {Base} from "./Base";
-import { useInitialData } from "~/routes/(app)/library";
+import { type AudioFileMetadata, getMpdClient } from "#mpd";
+import { SongList } from "../song/SongList";
+
 
 const loadPath = server$(async function(path: string){
-    return await mpdServerApi.list(path);
+    const result = await (await getMpdClient(this)).list(path);
+    return {file: result.files, directory: result.directories};
+    //return await mpdServerApi.list(path);
 })
 
-export const Library = component$(() => {
+export interface LibraryProps {
+    initialData: {file: AudioFileMetadata[], directory: string[]}
+}
 
-    const initialData = useInitialData();
+export const Library = component$(({initialData}: LibraryProps) => {
 
     const history = useSignal<string[]>(['']);
-    const files = useSignal<AudioFileMetadata[]>(initialData.value.file);
-    const directories = useSignal<string[]>(initialData.value.directory);
+    const files = useSignal<AudioFileMetadata[]>(initialData.file);
+    const directories = useSignal<string[]>(initialData.directory);
 
     const goPath = $(async (path: string) => {
         const result = await loadPath(path);
@@ -31,11 +35,17 @@ export const Library = component$(() => {
     })
 
     return (
-        <Base 
-            history={history.value} 
-            directories={directories.value} 
-            files={files.value} 
-            goPath={goPath} 
-            goBack={goBack} />
+        <>
+            {history.value.length > 1 && 
+                <button class="mb-2 cursor-pointer bg-brand-200 hover:bg-brand-300" onClick$={goBack} >[..]</button>
+            }
+            {directories.value.map((dir) => (
+                <div key={dir} class="mb-2 cursor-pointer bg-brand-200 hover:bg-brand-300">
+                    <button class="cursor-pointer" onClick$={() => goPath(dir)}>{dir}</button>
+                </div>
+                
+            ))}
+            <SongList songs={files.value} />
+        </>
     );
 })

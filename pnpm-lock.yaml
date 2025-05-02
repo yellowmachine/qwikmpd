@@ -102,6 +102,9 @@ importers:
       tailwindcss:
         specifier: ^4.0.0
         version: 4.1.5
+      testing@latest:
+        specifier: link:@builder.io/qwik-city/testing@latest
+        version: link:@builder.io/qwik-city/testing@latest
       typescript:
         specifier: 5.4.5
         version: 5.4.5
