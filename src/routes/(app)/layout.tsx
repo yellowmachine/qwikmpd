@@ -1,15 +1,13 @@
 import { $, component$, Slot, useSignal, useOnDocument, useVisibleTask$, useStore, type Signal } from "@builder.io/qwik";
 import { server$  } from "@builder.io/qwik-city";
-import { type StatusData, type QueueData, getMpdClient, emptyStatus } from "~/server/mpd";
+import { type StatusData, type QueueData, subscribe, emptyStatus } from "~/server/mpd";
 import {
   useContextProvider,
   createContextId,
 } from '@builder.io/qwik';
 
 export const streamFromServer = server$(async function* () {
-  const mpd = await getMpdClient(this);
-
-  for await (const msg of await mpd.subscribe()) {
+  for await (const msg of await subscribe()) {
     yield msg;
   }
 });
@@ -19,6 +17,8 @@ export const storesContext = createContextId<{queue: QueueData, state: StatusDat
 
 export default component$(() => {
   
+  const ready = useSignal(false);
+  const warning = useSignal('');
   const isConnected = useSignal(false);
   const reconnectAttempts = useSignal(0);
   const maxReconnectAttempts = 5;
@@ -44,7 +44,11 @@ export default component$(() => {
         if(value.type === 'status') {
             state.volume = value.data.volume;
             state.state = value.data.state;
-        }else {
+        }else if( value.type === 'warning') {
+            warning.value = value.data;
+        } else if( value.type === 'ready') {
+            ready.value = value.data;
+        } else {
             queue.queue = value.data.queue;
             queue.currentSong = value.data.currentSong;
         }
@@ -111,11 +115,12 @@ export default component$(() => {
 
   return (
     <div>
-      <header>MPD Controller</header>
-      <div>
+      <div class={`text-white ${ready.value ? 'text-green-500' : 'text-red-500'} text-green-500`}>{ready.value ? 'MPD Conectado' : 'MPD Desconectado'}</div>
+      <div class="text-red-500">{warning.value}</div>
+      <div class="text-brand-500 mb-4">
         Conectado: {isConnected.value ? 'Sí' : 'No'} | Intentos de reconexión: {reconnectAttempts.value}
       </div>
-      <div>
+      <div class="text-brand-500 mb-4">
         Estado: {state.state} | Volumen: {state.volume}
       </div>
       <Slot />
