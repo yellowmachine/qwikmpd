@@ -1,6 +1,12 @@
 import { $, component$, type Signal } from "@builder.io/qwik";
+import { server$ } from "@builder.io/qwik-city";
 import { formatTime } from "~/lib/song";
-import { mpdServerApi as playerApi } from '~/server/mpd';
+import { getMpdClient } from '~/server/mpd';
+
+const seek = server$(async function(elapsed: number) {
+    const mpd = await getMpdClient(this);
+    await mpd.seek(elapsed);
+})
 
 
 export interface ProgressBarProps {
@@ -16,7 +22,7 @@ export default component$(( {total, elapsed} : ProgressBarProps) => {
 
     const onChange = $(async (event: Event) => {
         const newElapsed = Number((event.target as HTMLInputElement).value);
-        await playerApi.seek(newElapsed);
+        await seek(newElapsed);
     });
     
     return (

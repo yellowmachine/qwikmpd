@@ -1,10 +1,10 @@
 import { Library } from "~/components/library/Library";
 import { component$ } from '@builder.io/qwik';
-import { type RequestEventLoader, routeLoader$ } from "@builder.io/qwik-city";
-import { getMpdClient } from "#mpd";
+import { routeLoader$ } from "@builder.io/qwik-city";
+import { list } from "#mpd";
 
-export const useLibraryData = routeLoader$(async (request: RequestEventLoader) => {
-    const result = await (await getMpdClient(request)).list('');
+export const useLibraryData = routeLoader$(async () => {
+    const result = await list('');
     return {file: result.files, directory: result.directories};
 });
    

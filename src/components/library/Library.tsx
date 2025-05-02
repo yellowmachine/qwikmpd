@@ -3,6 +3,7 @@ import { server$ } from "@builder.io/qwik-city";
 import { getMpdClient } from "#mpd";
 import { SongList } from "../song/SongList";
 import type { Song } from "~/lib/song";
+import PlayHere from "../player/PlayHere";
 
 
 const loadPath = server$(async function(path: string){
@@ -38,6 +39,9 @@ export const Library = component$(({initialData}: LibraryProps) => {
         <>
             {history.value.length > 1 && 
                 <button class="mb-2 cursor-pointer bg-brand-200 hover:bg-brand-300" onClick$={goBack} >[..]</button>
+            }
+            {files.value.length > 0 && 
+                <PlayHere />
             }
             {directories.value.map((dir) => (
                 <div key={dir} class="mb-2 cursor-pointer bg-brand-200 hover:bg-brand-300">

@@ -233,6 +233,16 @@ class Mpd{
     
 }
 
+export const playHere = server$(async function(path: string){
+    const client = await getMpdClient(this);
+    return await client.playHere(path);
+})
+
+export const list = server$(async function(path: string){
+  const client = await getMpdClient(this);
+  return await client.list(path);
+})
+
 export type QueueData = {queue: Song[], currentSong: string};
 type QueueEvent = { type: 'queue', data: QueueData}
 
