@@ -30,7 +30,7 @@ export const Song = component$<SongProps>(( {song, currentSong, pos} ) => {
                     <span class={`font-medium text-lg text-orange-600`}>{song.title}</span>
                     <span class="text-xs text-blue-400 ml-2">({song.artist})</span>
                     <span class="text-blue-500">
-                        {formatTime(currentSong?.elapsed)} / {formatTime(currentSong?.total)}
+                        {formatTime(currentSong.elapsed)} / {formatTime(currentSong.total)}
                     </span>
                     </div>
                     

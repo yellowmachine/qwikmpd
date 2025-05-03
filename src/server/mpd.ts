@@ -236,14 +236,14 @@ export const subscribe = server$(async function *f(){
   }
 })
 
-export const queue = server$(async function(event){
-  const client = await getMpdClient(event);
+export const queue = server$(async function(){
+  const client = await getMpdClient(this);
   const msg = await getQueueMsg(client);
   return msg;
 }) 
 
-export const list = server$(async function(path: string, event){
-    const client = await getMpdClient(event);
+export const list = server$(async function(path: string){
+    const client = await getMpdClient(this);
     const list = await client?.api.db.lsinfo(path) as LsInfo;
     const status = await client?.api.status.get() as StatusData;
     const current = list.file.find(item => item.title === status.currentSong?.title);
@@ -251,75 +251,75 @@ export const list = server$(async function(path: string, event){
     return { directories: list.directory.map(d => d.directory), files: formatSongArray(list.file), file: list.file, currentSong: current?.title};
 })
 
-export const add = server$(async function(path: string, event){
-    const client = await getMpdClient(event);
+export const add = server$(async function(path: string){
+    const client = await getMpdClient(this);
     await client?.api.queue.add(path);
 })
 
-export const remove = server$(async function(path: string, event){
-    const client = await getMpdClient(event);
+export const remove = server$(async function(path: string){
+    const client = await getMpdClient(this);
     await client?.api.queue.delete(path);
 })
 
-const load = server$(async function(path: string, event){
-    const client = await getMpdClient(event);
+const load = server$(async function(path: string){
+    const client = await getMpdClient(this);
     const list = await client?.api.db.lsinfo(path) as LsInfo;
     
     const uris = list.file.map(f => f.file);
     for(let uri of uris){
-      await add(uri, event);
+      await add(uri);
     }
   })
 
-export const clear = server$(async function(event){
-    const client = await getMpdClient(event);
+export const clear = server$(async function(){
+    const client = await getMpdClient(this);
     await client.api.queue.clear();
 })
 
-export const playHere = server$(withMpdReconnect(async function(path: string, event){
-    await clear(event);
-    await load(path, event);
-    await play(0, event);
+export const playHere = server$(withMpdReconnect(async function(path: string){
+    await clear();
+    await load(path);
+    await play();
 }))
 
-export const play = server$(async function(pos: number, event){
-    const client = await getMpdClient(event);
+export const play = server$(async function(pos?: number){
+    const client = await getMpdClient(this);
     await client?.api.playback.play((pos || 0) as unknown as string);
 })
 
-export const playThis = server$(async function(pos: number, event){
-    const client = await getMpdClient(event);
+export const playThis = server$(async function(pos: number){
+    const client = await getMpdClient(this);
     await client?.api.playback.play(pos as unknown as string);
 })
 
-export const stop = server$(async function(event){
-    const client = await getMpdClient(event);
+export const stop = server$(async function(){
+    const client = await getMpdClient(this);
     await client?.api.playback.stop();
 })
 
-export const pause = server$(async function(event){
-    const client = await getMpdClient(event);
+export const pause = server$(async function(){
+    const client = await getMpdClient(this);
     await client?.api.playback.pause();
 })
 
-export const next = server$(async function(event){
-    const client = await getMpdClient(event);
+export const next = server$(async function(){
+    const client = await getMpdClient(this);
     await client?.api.playback.next();
 })
 
-export const prev = server$(async function(event){
-    const client = await getMpdClient(event);
+export const prev = server$(async function(){
+    const client = await getMpdClient(this);
     await client?.api.playback.prev();
 })
 
-export const seek = server$(async function(seconds: number, event){
-    const client = await getMpdClient(event);
+export const seek = server$(async function(seconds: number){
+    const client = await getMpdClient(this);
     await client?.api.playback.seekcur(''+seconds);
 })
 
-export const setVolume = server$(async function(volume: number, event){
+export const setVolume = server$(async function(volume: number){
     if(volume < 0 || volume > 100) return;
-    const client = await getMpdClient(event);
+    const client = await getMpdClient(this);
     await client?.api.playback.setvol(''+volume);
 })
 
@@ -394,7 +394,7 @@ export type AudioFile = {
 }
 
 export const getMpdClient = async (
-  requestEvent: RequestEventBase<{ env: Env }>,
+  requestEvent: RequestEventBase<QwikCityPlatform>,
   options: { forceReconnect?: boolean } = {forceReconnect: false},
 ) => {
   //const secret = requestEvent.env.get('SECRET')!;

@@ -15,6 +15,6 @@ export const Item: Story = {
     
   },
   render: () => (
-    <PlayHere  />
+    <PlayHere path="https://www.youtube.com/watch?v=dQw4w9WgXcQ"  />
   )
 };

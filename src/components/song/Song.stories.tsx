@@ -24,7 +24,7 @@ export const ItemEqualsCurrentSong: Story = {
     }
   },
   render: (props: SongProps) => (
-    <Song song={props.song} currentSong={props.currentSong} />
+    <Song song={props.song} currentSong={props.currentSong} pos={0} />
   )
 };
 
@@ -39,6 +39,6 @@ export const ItemNotEqualsCurrentSong: Story = {
     currentSong: null
   },
   render: (props: SongProps) => (
-    <Song song={props.song} currentSong={props.currentSong} />
+    <Song song={props.song} currentSong={props.currentSong} pos={0} />
   )
 };

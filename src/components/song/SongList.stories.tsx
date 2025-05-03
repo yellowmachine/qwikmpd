@@ -29,6 +29,6 @@ export const List: Story = {
 
   },
   render: (props: { songs: TSong[] }) => (
-    <SongList {...props} />
+    <SongList {...props} currentSong={null} />
   )
 };
