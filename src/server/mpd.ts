@@ -397,7 +397,6 @@ export const getMpdClient = async (
   requestEvent: RequestEventBase<QwikCityPlatform>,
   options: { forceReconnect?: boolean } = {forceReconnect: false},
 ) => {
-  //const secret = requestEvent.env.get('SECRET')!;
 
   if (options?.forceReconnect) {
     // Forzar reinicialización: limpia la instancia actual
@@ -405,7 +404,7 @@ export const getMpdClient = async (
   }
 
   if (!client) {
-    const serverUrl = requestEvent.env.get('MPD_SERVER')!;
+    const serverUrl = requestEvent.env.get('MPD_SERVER') || 'localhost';
     client = await connectClient(serverUrl);
   }
   return client;

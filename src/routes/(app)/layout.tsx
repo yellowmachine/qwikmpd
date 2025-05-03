@@ -4,7 +4,6 @@ import {
   useContextProvider,
   createContextId,
 } from '@builder.io/qwik';
-import { Menu } from "~/components/menu/Menu";
 import { routeLoader$ } from "@builder.io/qwik-city";
 
 export const useInitialData = routeLoader$(async function (request){
@@ -147,7 +146,6 @@ export default component$(() => {
       <div class="text-red-500">
         {warning.value}
       </div>
-      <Menu />
       <Slot />
     </div>
   );
