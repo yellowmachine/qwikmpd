@@ -81,24 +81,24 @@ export default component$(() => {
       console.error('Error en stream:', error);
       isConnected.value = false;
       if (reconnectAttempts.value < maxReconnectAttempts) {
-        reconnectAttempts.value++;
-        handleReconnect();
+        await handleReconnection();
       }
     } finally {
       isConnecting.value = false;
     }
   });
 
-  const handleReconnect = $(() => {
+  const handleReconnection = $(async () => {
+    reconnectAttempts.value++;
     if (reconnectAttempts.value < maxReconnectAttempts) {
       reconnectAttempts.value++;
-      setTimeout(connectToStream, 2000);
+      setTimeout(() => connectToStream(), 2000);
     }
   });
 
   useOnDocument('visibilitychange', $(async () => {
     if (document.visibilityState === 'visible') {
-      await connectToStream();
+      connectToStream();
     } else {
       isConnected.value = false;
       return stream.value;
@@ -107,7 +107,7 @@ export default component$(() => {
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async ({cleanup}) => {
-    await connectToStream();
+    connectToStream();
     cleanup(async () => {
       (await stream.value)?.return();
     })
