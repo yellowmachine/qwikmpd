@@ -1,8 +1,10 @@
-import { component$, useSignal,  } from '@builder.io/qwik';
+import { $, component$, useSignal,  } from '@builder.io/qwik';
 import { formatTime, type Song as TSong } from '~/lib/song';
 import { SongPopUp } from './SongPopup';
+import { playThis } from '~/server/mpd';
 
 export interface SongProps {
+  pos: number;
   song: TSong;
   currentSong: {
     uri: string;
@@ -11,9 +13,13 @@ export interface SongProps {
   } | null;
 }
 
-export const Song = component$<SongProps>(( {song, currentSong} ) => {
+export const Song = component$<SongProps>(( {song, currentSong, pos} ) => {
 
     const show = useSignal(false);
+
+    const playThisSong = $(async () => {
+        await playThis(pos);
+    })
 
     return (
         <>
@@ -41,7 +47,7 @@ export const Song = component$<SongProps>(( {song, currentSong} ) => {
                 </div> 
                 : 
                 <div class="cursor-pointer gap-2 p-3 rounded transition-all bg-white hover:bg-brand-100 dark:bg-gray-800 border border-brand-300 dark:hover:bg-gray-700">
-                <button 
+                <button onClick$={() => playThisSong()}
                     aria-label="cancion"
                     class="flex items-center justify-between w-full md:w-1/2 max-w-md mx-auto cursor-pointer relative"
                     >

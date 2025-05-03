@@ -128,18 +128,12 @@ async function connectClient(serverUrl: string) {
 
           client = c; // salvo que los broadcast los saque al que llamo, debo hacer client = c
 
-          await broadcast({ type: 'ready', data: true });
-          const statusData = await c.api.status.get() as unknown as StatusData;
-          await broadcast({ type: 'status', data: statusData });
-
-          const queueData = await getQueueMsg(c);
-          await broadcast({ type: 'queue', data: queueData });
-
-          // Manejo de eventos para reconexión automática
           c.on('system', async (eventName: string) => {
             if (eventName === 'player' || eventName === 'mixer') {
               const statusData = client?.api.status.get() as unknown as StatusData;
               await broadcast({ type: 'status', data: statusData });
+              const queueData = await getQueueMsg(c);
+              await broadcast({ type: 'queue', data: queueData });
             }
           });
 
@@ -291,6 +285,11 @@ export const playHere = server$(withMpdReconnect(async function(path: string){
 export const play = server$(async function(pos?: number){
     const client = await getMpdClient(this);
     await client?.api.playback.play((pos || 0) as unknown as string);
+})
+
+export const playThis = server$(async function(pos: number){
+    const client = await getMpdClient(this);
+    await client?.api.playback.play(pos as unknown as string);
 })
 
 export const stop = server$(async function(){

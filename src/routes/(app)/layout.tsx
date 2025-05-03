@@ -1,4 +1,4 @@
-import { $, component$, Slot, useSignal, useOnDocument, useVisibleTask$, useStore, type Signal, useTask$ } from "@builder.io/qwik";
+import { $, component$, Slot, useSignal, useOnDocument, useVisibleTask$, useStore, type Signal } from "@builder.io/qwik";
 import { type StatusData, type QueueData, subscribe, emptyStatus, type MPDEvent, getMpdClient } from "~/server/mpd";
 import {
   useContextProvider,
@@ -25,14 +25,15 @@ export default component$(() => {
   const maxReconnectAttempts = 5;
   const isConnecting = useSignal(false);
   const stream = useSignal<Promise<AsyncGenerator<MPDEvent, void, unknown>> | null>(null);
-
-
   const state = useStore<StatusData>(emptyStatus);
   const queue = useStore<QueueData>({queue: [], currentSong: ''});
-
+  const elapsed = useSignal(state.time?.elapsed || 0);
+  
+  useContextProvider(storesContext, {queue, state, elapsed});
   const initialData = useInitialData();
 
-  useTask$(() => {
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(() => {
     Object.assign(state, {
       ...initialData.value.status
     });
@@ -52,6 +53,8 @@ export default component$(() => {
       stream.value = subscribe();
 
       for await (const value of await stream.value) {
+
+        //console.log(value.data, value.type)
         
         switch (value.type) {
           case 'status':
@@ -110,16 +113,19 @@ export default component$(() => {
     })
   });
 
-  const elapsed = useSignal(state.time?.elapsed || 0);
-  useContextProvider(storesContext, {queue, state, elapsed});
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({track}) => {
+    const [_] = track(() => [state.songid]);
+    console.log(_)
+    elapsed.value = 0
+  })
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track, cleanup }) => {
-    const statePlayer = track(() => state.state);
+    const [statePlayer] = track(() => [state.state]);
 
     elapsed.value = state.time?.elapsed || 0;
  
-    //time?.elapsed == null ||
     if (statePlayer === 'stop' || statePlayer === 'pause') {
         if(statePlayer === 'stop') 
           elapsed.value = 0;
@@ -138,7 +144,9 @@ export default component$(() => {
 
   return (
     <div>
-      <div class="text-red-500">{warning.value}</div>
+      <div class="text-red-500">
+        {warning.value}
+      </div>
       <Menu />
       <Slot />
     </div>

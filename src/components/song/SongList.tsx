@@ -17,7 +17,7 @@ export const SongList = component$<SongListProps>(( {songs, currentSong} ) => {
             <div class="">
                 {songs.map((song) => (
                     <div class="border border-2 border-brand-300 mb-2" key={song.uri}>
-                        <Song song={song} currentSong={currentSong} />
+                        <Song song={song} currentSong={currentSong} pos={songs.indexOf(song)} />
                     </div>
                 ))}
             </div>
