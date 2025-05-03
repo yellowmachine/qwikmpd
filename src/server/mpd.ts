@@ -315,7 +315,7 @@ export const prev = server$(async function(){
 
 export const seek = server$(async function(seconds: number){
     const client = await getMpdClient(this);
-    await client?.api.playback.seek(''+seconds);
+    await client?.api.playback.seekcur(''+seconds);
 })
 
 export const setVolume = server$(async function(volume: number){

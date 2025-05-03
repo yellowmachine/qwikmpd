@@ -1,5 +1,5 @@
 import { component$, type QRL } from '@builder.io/qwik';
-import { VolumeBar } from '../player/VolumeBar';
+import { VolumeBar } from './VolumeBar';
 
 
 export interface VolumeProps {

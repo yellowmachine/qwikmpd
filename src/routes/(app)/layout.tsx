@@ -56,7 +56,7 @@ export default component$(() => {
         switch (value.type) {
           case 'status':
             Object.assign(state, {
-              ...initialData.value.status
+              ...value.data
             });
             break;
           case 'warning':
@@ -138,14 +138,7 @@ export default component$(() => {
 
   return (
     <div>
-      <div class={`${ready.value ? 'text-green-500' : 'text-red-500'} text-green-500`}>{ready.value ? 'MPD Conectado' : 'MPD Desconectado'}</div>
       <div class="text-red-500">{warning.value}</div>
-      <div class="text-brand-500 mb-4">
-        Conectado: {isConnected.value ? 'Sí' : 'No'} | Intentos de reconexión: {reconnectAttempts.value}
-      </div>
-      <div class="text-brand-500 mb-4">
-        Estado: {state.state} | Volumen: {state.volume}
-      </div>
       <Menu />
       <Slot />
     </div>
