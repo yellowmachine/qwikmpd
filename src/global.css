@@ -1,3 +1,61 @@
 @import "tailwindcss";
 
+:root {
+    --brand-50:  #fff7ed;
+    --brand-100: #ffedd5;
+    --brand-200: #fed7aa;
+    --brand-300: #fdba74;
+    --brand-400: #fb923c;
+    --brand-500: #f97316;
+    --brand-600: #ea580c;
+    --brand-700: #c2410c;
+    --brand-800: #9a3412;
+    --brand-900: #7c2d12;
+  }
 
+  @layer utilities {
+    .text-brand-50  { color: var(--brand-50); }
+    .text-brand-100 { color: var(--brand-100); }
+    .text-brand-200 { color: var(--brand-200); }
+    .text-brand-300 { color: var(--brand-300); }
+    .text-brand-400 { color: var(--brand-400); }
+    .text-brand-500 { color: var(--brand-500); }
+    .text-brand-600 { color: var(--brand-600); }
+    .text-brand-700 { color: var(--brand-700); }
+    .text-brand-800 { color: var(--brand-800); }
+    .text-brand-900 { color: var(--brand-900); }
+  
+    .bg-brand-50  { background-color: var(--brand-50); }
+    .bg-brand-100 { background-color: var(--brand-100); }
+    .bg-brand-200 { background-color: var(--brand-200); }
+    .bg-brand-300 { background-color: var(--brand-300); }
+    .bg-brand-400 { background-color: var(--brand-400); }
+    .bg-brand-500 { background-color: var(--brand-500); }
+    .bg-brand-600 { background-color: var(--brand-600); }
+    .bg-brand-700 { background-color: var(--brand-700); }
+    .bg-brand-800 { background-color: var(--brand-800); }
+    .bg-brand-900 { background-color: var(--brand-900); }
+
+    .ring-brand-50  { --tw-ring-color: var(--brand-50); }
+    .ring-brand-100 { --tw-ring-color: var(--brand-100); }
+    .ring-brand-200 { --tw-ring-color: var(--brand-200); }
+    .ring-brand-300 { --tw-ring-color: var(--brand-300); }
+    .ring-brand-400 { --tw-ring-color: var(--brand-400); }
+    .ring-brand-500 { --tw-ring-color: var(--brand-500); }
+    .ring-brand-600 { --tw-ring-color: var(--brand-600); }
+    .ring-brand-700 { --tw-ring-color: var(--brand-700); }
+    .ring-brand-800 { --tw-ring-color: var(--brand-800); }
+    .ring-brand-900 { --tw-ring-color: var(--brand-900); }
+
+    .border-brand-50  { border-color: var(--brand-50); }
+  .border-brand-100 { border-color: var(--brand-100); }
+  .border-brand-200 { border-color: var(--brand-200); }
+  .border-brand-300 { border-color: var(--brand-300); }
+  .border-brand-400 { border-color: var(--brand-400); }
+  .border-brand-500 { border-color: var(--brand-500); }
+  .border-brand-600 { border-color: var(--brand-600); }
+  .border-brand-700 { border-color: var(--brand-700); }
+  .border-brand-800 { border-color: var(--brand-800); }
+  .border-brand-900 { border-color: var(--brand-900); }
+  }
+  

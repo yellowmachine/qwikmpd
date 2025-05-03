@@ -17,7 +17,8 @@
     "outDir": "tmp",
     "noEmit": true,
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "#mpd": ["./src/server/mpd.ts"]
     }
   },
   "files": ["./.eslintrc.cjs"],

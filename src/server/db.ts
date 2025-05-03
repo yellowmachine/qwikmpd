@@ -6,7 +6,7 @@ import type { Settings } from './schemas';
 
 export type Data = { volume: number, setupDone: boolean, admin: Settings };
 
-const dbFile = 'db.json';
+const dbFile = 'data/db.json';
 
 
 function stripPasswords(data: Data) {
@@ -62,10 +62,10 @@ class LowdbAdapter {
   }
 
   async getSetupDone() {
-    return (await this.getData()).setupDone;
+    return true; //(await this.getData()).setupDone;
   }
 
-  async setSetupDone({ip, username, password}: {ip: string, username: string, password: string, secret: string}) {
+  async setSetupDone({ip, username, password}: {ip: string, username: string, password: string}) {
     // password comes encrypted
     await this.setData({ 
         setupDone: true, 
