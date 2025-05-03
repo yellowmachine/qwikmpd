@@ -26,7 +26,7 @@ export default component$(( {total, elapsed} : ProgressBarProps) => {
     
     return (
         <>
-            <div class="max-w-md">
+            <div class="w-full">
                 <input
                     id="player-range"
                     type="range"

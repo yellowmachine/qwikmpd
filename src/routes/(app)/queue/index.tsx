@@ -28,13 +28,17 @@ export default component$(() => {
     
     
     return (
-      <>
-        <IsPlaying isPlaying={state.state === 'play'} />
-        <Player state={state.state} total={totalCurrentSong()} volume={state.volume} />
-        <SongList 
-          songs={queue.queue} 
-          currentSong={ { uri: queue.currentSong, elapsed: elapsed.value, total: totalCurrentSong()} } />
-      </>
+      <div>
+          <div class="flex justify-center">
+            <IsPlaying isPlaying={state.state === 'play'} />
+          </div>
+          <div class="flex justify-center">
+            <Player state={state.state} total={totalCurrentSong()} volume={state.volume} />
+          </div>
+          <SongList 
+            songs={queue.queue} 
+            currentSong={ { uri: queue.currentSong, elapsed: elapsed.value, total: totalCurrentSong()} } />
+      </div>
     );
   }
 );

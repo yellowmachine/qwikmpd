@@ -1,5 +1,5 @@
 import { component$, type QRL } from '@builder.io/qwik';
-import { VolumeBar } from './VolumeBar';
+//import { VolumeBar } from './VolumeBar';
 
 
 export interface VolumeProps {
@@ -7,10 +7,10 @@ export interface VolumeProps {
   onVolumeChange$?: QRL<(v: number) => void>;
 }
 
-export const Volume = component$(( {volume, onVolumeChange$} : VolumeProps) => {
+export const Volume = component$(( {volume} : VolumeProps) => {
 
     return <>
         <span class="text-brand-500 text-xl">{volume}</span>
-        <VolumeBar onVolumeChange$={onVolumeChange$} volume={volume} />
+        {/*<VolumeBar onVolumeChange$={onVolumeChange$} volume={volume} />*/}
     </>
 });

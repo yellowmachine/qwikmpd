@@ -27,7 +27,7 @@ export const Song = component$<SongProps>(( {song, currentSong, pos} ) => {
                 <div class="col-span-full">
                     <div class="flex items-center gap-2">
                     <span class="text-blue-600 font-bold animate-pulse">●</span>
-                    <span class={`font-medium text-orange-600`}>{song.title}</span>
+                    <span class={`font-medium text-lg text-orange-600`}>{song.title}</span>
                     <span class="text-xs text-blue-400 ml-2">({song.artist})</span>
                     <span class="text-blue-500">
                         {formatTime(currentSong?.elapsed)} / {formatTime(currentSong?.total)}

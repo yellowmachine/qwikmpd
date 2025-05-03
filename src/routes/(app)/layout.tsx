@@ -143,7 +143,7 @@ export default component$(() => {
   });
 
   return (
-    <div>
+    <div class="bg-brand-50">
       <div class="text-red-500">
         {warning.value}
       </div>

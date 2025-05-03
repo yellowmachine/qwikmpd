@@ -16,15 +16,9 @@ export const Menu = component$(() => {
           <li key={href} class="p-2 cursor-pointer hover:bg-brand-200">
             <Link
               href={href}
-              class={{
-                'active': location.url.pathname === href,
-                'inactive': location.url.pathname !== href,
-              }}
-              style={{
-                textDecoration: 'none',
-                color: location.url.pathname === href ? 'blue' : 'black',
-                fontWeight: location.url.pathname === href ? 'bold' : 'normal',
-              }}
+              class={`text-brand-500 ${
+                location.url.pathname === href ? 'font-bold' : ''
+              }`}
             >
               {label}
             </Link>
