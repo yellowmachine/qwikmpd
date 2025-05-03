@@ -23,7 +23,7 @@ export function formatSongArray(audios: (AudioFileMetadata | AudioFile)[]) {
             artist: audio.artist,
             title: audio.title || stripFolder(audio.file),
             uri: audio.file,
-            time: formatTime(audio.time)
+            time: audio.time
         }
     )) as Song[]
 }

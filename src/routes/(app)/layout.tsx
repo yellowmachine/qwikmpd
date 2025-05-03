@@ -1,17 +1,18 @@
-import { $, component$, Slot, useSignal, useOnDocument, useVisibleTask$, useStore, type Signal } from "@builder.io/qwik";
-import { server$  } from "@builder.io/qwik-city";
-import { type StatusData, type QueueData, subscribe, emptyStatus } from "~/server/mpd";
+import { $, component$, Slot, useSignal, useOnDocument, useVisibleTask$, useStore, type Signal, useTask$ } from "@builder.io/qwik";
+import { type StatusData, type QueueData, subscribe, emptyStatus, type MPDEvent, getMpdClient } from "~/server/mpd";
 import {
   useContextProvider,
   createContextId,
 } from '@builder.io/qwik';
+import { Menu } from "~/components/menu/Menu";
+import { routeLoader$ } from "@builder.io/qwik-city";
 
-export const streamFromServer = server$(async function* () {
-  for await (const msg of await subscribe()) {
-    yield msg;
+export const useInitialData = routeLoader$(async function (request){
+  const client = await getMpdClient(request, {forceReconnect: true});
+  return {
+    status: await client.api.status.get() as unknown as StatusData,
   }
-});
-
+})
 
 export const storesContext = createContextId<{queue: QueueData, state: StatusData, elapsed: Signal<number>}>('stores');
 
@@ -23,10 +24,19 @@ export default component$(() => {
   const reconnectAttempts = useSignal(0);
   const maxReconnectAttempts = 5;
   const isConnecting = useSignal(false);
-  const response = useSignal<ReturnType<typeof streamFromServer> | null>(null);
+  const stream = useSignal<Promise<AsyncGenerator<MPDEvent, void, unknown>> | null>(null);
+
 
   const state = useStore<StatusData>(emptyStatus);
   const queue = useStore<QueueData>({queue: [], currentSong: ''});
+
+  const initialData = useInitialData();
+
+  useTask$(() => {
+    Object.assign(state, {
+      ...initialData.value.status
+    });
+  })
 
   const connectToStream = $(async () => {
 
@@ -35,22 +45,33 @@ export default component$(() => {
 
     try {
       console.log('Iniciando stream...');
-      response.value = streamFromServer();
 
       isConnected.value = true;
       reconnectAttempts.value = 0;
 
-      for await (const value of await response.value) {
-        if(value.type === 'status') {
-            state.volume = value.data.volume;
-            state.state = value.data.state;
-        }else if( value.type === 'warning') {
+      stream.value = subscribe();
+
+      for await (const value of await stream.value) {
+        
+        switch (value.type) {
+          case 'status':
+            Object.assign(state, {
+              ...initialData.value.status
+            });
+            break;
+          case 'warning':
             warning.value = value.data;
-        } else if( value.type === 'ready') {
+            break;
+          case 'ready':
             ready.value = value.data;
-        } else {
+            break;
+          case 'queue':
             queue.queue = value.data.queue;
             queue.currentSong = value.data.currentSong;
+            break;
+          default:
+              console.error('Unknown value type:', JSON.stringify(value));
+              break;
         }
       }
     } catch (error) {
@@ -74,17 +95,19 @@ export default component$(() => {
 
   useOnDocument('visibilitychange', $(async () => {
     if (document.visibilityState === 'visible') {
-      connectToStream();
+      await connectToStream();
     } else {
-      (await response.value)?.return();
       isConnected.value = false;
+      return stream.value;
     }
   }));
 
   // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(({ cleanup }) => {
-    connectToStream();
-    cleanup(async () => (await response.value)?.return());
+  useVisibleTask$(async ({cleanup}) => {
+    await connectToStream();
+    cleanup(async () => {
+      (await stream.value)?.return();
+    })
   });
 
   const elapsed = useSignal(state.time?.elapsed || 0);
@@ -92,7 +115,7 @@ export default component$(() => {
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track, cleanup }) => {
-    const [statePlayer] = track(() => [ state.state]);
+    const statePlayer = track(() => state.state);
 
     elapsed.value = state.time?.elapsed || 0;
  
@@ -115,7 +138,7 @@ export default component$(() => {
 
   return (
     <div>
-      <div class={`text-white ${ready.value ? 'text-green-500' : 'text-red-500'} text-green-500`}>{ready.value ? 'MPD Conectado' : 'MPD Desconectado'}</div>
+      <div class={`${ready.value ? 'text-green-500' : 'text-red-500'} text-green-500`}>{ready.value ? 'MPD Conectado' : 'MPD Desconectado'}</div>
       <div class="text-red-500">{warning.value}</div>
       <div class="text-brand-500 mb-4">
         Conectado: {isConnected.value ? 'Sí' : 'No'} | Intentos de reconexión: {reconnectAttempts.value}
@@ -123,6 +146,7 @@ export default component$(() => {
       <div class="text-brand-500 mb-4">
         Estado: {state.state} | Volumen: {state.volume}
       </div>
+      <Menu />
       <Slot />
     </div>
   );

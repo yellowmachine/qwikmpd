@@ -1,6 +1,7 @@
 import { RequestEventBase, server$ } from '@builder.io/qwik-city';
 import { ServerError } from '@builder.io/qwik-city/middleware/request-handler';
 import mpdApi, { type MPDApi } from 'mpd-api';
+import { s } from 'vitest/dist/reporters-5f784f42.js';
 import WaitQueue from 'wait-queue';
 import { formatSongArray, Song } from '~/lib/song';
 
@@ -110,7 +111,7 @@ let reconnectAttempts = 0;
 let maxReconnectAttempts = 5;
 let initializingPromise: Promise<MPDApi.ClientAPI> | null = null;
 
-async function connectClient(secret: string, serverUrl: string) {
+async function connectClient(serverUrl: string) {
   if (initializingPromise) {
     return initializingPromise;
   }
@@ -121,36 +122,37 @@ async function connectClient(secret: string, serverUrl: string) {
     while (reconnectAttempts < maxReconnectAttempts) {
       try {
         if (!client) {
-          console.log('Conectando MPD...');
+          console.log('Conectando MPD...', serverUrl);
           const c = await mpdApi.connect({ host: serverUrl, port: 6600 });
           console.log('MPD listo para recibir eventos.');
 
           client = c; // salvo que los broadcast los saque al que llamo, debo hacer client = c
 
-          broadcast({ type: 'ready', data: true });
+          await broadcast({ type: 'ready', data: true });
+          const statusData = await c.api.status.get() as unknown as StatusData;
+          await broadcast({ type: 'status', data: statusData });
 
-          const statusData = c.api.status as unknown as StatusData;
-          broadcast({ type: 'status', data: statusData });
-
-          const queueData = await getQueueMsg();
-          broadcast({ type: 'queue', data: queueData });
+          const queueData = await getQueueMsg(c);
+          await broadcast({ type: 'queue', data: queueData });
 
           // Manejo de eventos para reconexión automática
           c.on('system', async (eventName: string) => {
             if (eventName === 'player' || eventName === 'mixer') {
-              const statusData = client?.api.status as unknown as StatusData;
-              broadcast({ type: 'status', data: statusData });
+              const statusData = client?.api.status.get() as unknown as StatusData;
+              await broadcast({ type: 'status', data: statusData });
             }
           });
 
           // En vez de llamar a tryReconnect, manejamos reconexión aquí
           c.on('error', async (err) => {
             console.error('Error en MPD:', err);
+            await broadcast({ type: 'ready', data: false });
             await reconnect();
           });
 
           c.on('close', async () => {
             console.log('Conexión MPD cerrada');
+            //broadcast({ type: 'ready', data: false });
             await reconnect();
           });
 
@@ -161,8 +163,7 @@ async function connectClient(secret: string, serverUrl: string) {
           return client;
         }
       } catch (error) {
-        broadcast({ type: 'ready', data: false });
-        broadcast({ type: 'warning', data: 'No se pudo conectar al servidor MPD. Intentando reconectar.' });
+        await broadcast({ type: 'warning', data: 'No se pudo conectar al servidor MPD. Intentando reconectar.' });
 
         reconnectAttempts++;
         console.error(`Error al conectar MPD (intento ${reconnectAttempts}):`, error);
@@ -183,7 +184,7 @@ async function connectClient(secret: string, serverUrl: string) {
   async function reconnect() {
     if (reconnectAttempts >= maxReconnectAttempts) {
       console.error('No se puede reconectar: máximo de intentos alcanzado.');
-      broadcast({ type: 'warning', data: 'No se puede reconectar:.maxcdn de intentos alcanzado.' });
+      await broadcast({ type: 'warning', data: 'No se puede reconectar:.maxcdn de intentos alcanzado.' });
       client = null;
       return;
     }
@@ -191,17 +192,18 @@ async function connectClient(secret: string, serverUrl: string) {
     client = null; // Fuerza nueva conexión
     console.log(`Intentando reconectar MPD (intento ${reconnectAttempts})...`);
     try {
-      client = await connectClient(secret, serverUrl);
+      client = await connectClient(serverUrl);
+      await broadcast({ type: 'ready', data: true });
     } catch (e) {
       console.error('Error durante la reconexión:', e);
-      broadcast({ type: 'warning', data: 'Error durante la reconexión...' });
+      await broadcast({ type: 'warning', data: 'Error durante la reconexión...' });
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await reconnect();
     }
   }
 }
 
-async function getQueueMsg(){
+async function getQueueMsg(client?: MPDApi.ClientAPI) {
   const list = await client?.api.queue.info() as AudioFile[];
   const status = await client?.api.status.get() as StatusData;
   const current = list.find(item => item.pos === status?.song);
@@ -209,9 +211,9 @@ async function getQueueMsg(){
   return {queue: formatSongArray(list), currentSong: current?.file || ''};
 }
 
-function broadcast(msg: MPDEvent){
+async function broadcast(msg: MPDEvent){ //deberia ser async
   for(const q of Object.values(subscriptors)){
-      q.push(msg);
+      await q.push(msg);
   }
 }
 
@@ -232,12 +234,19 @@ export const subscribe = server$(async function *f(){
         
   try {
     while (true) {
-      yield await queue.pop();
+      const msg = await queue.pop();
+      yield msg
     }
   } finally {
     removeListener(id);
   }
 })
+
+export const queue = server$(async function(){
+  const client = await getMpdClient(this);
+  const msg = await getQueueMsg(client);
+  return msg;
+}) 
 
 export const list = server$(async function(path: string){
     const client = await getMpdClient(this);
@@ -258,14 +267,19 @@ export const remove = server$(async function(path: string){
     await client?.api.queue.delete(path);
 })
 
-export const load = server$(async function(path: string){
+const load = server$(async function(path: string){
     const client = await getMpdClient(this);
-    await client?.api.playlists.load(path);
+    const list = await client?.api.db.lsinfo(path) as LsInfo;
+    
+    const uris = list.file.map(f => f.file);
+    for(let uri of uris){
+      await add(uri);
+    }
   })
 
 export const clear = server$(async function(){
     const client = await getMpdClient(this);
-    await client?.api.queue.clear();
+    await client.api.queue.clear();
 })
 
 export const playHere = server$(withMpdReconnect(async function(path: string){
@@ -276,7 +290,7 @@ export const playHere = server$(withMpdReconnect(async function(path: string){
 
 export const play = server$(async function(pos?: number){
     const client = await getMpdClient(this);
-    await client?.api.playback.play(''+pos || '0');
+    await client?.api.playback.play((pos || 0) as unknown as string);
 })
 
 export const stop = server$(async function(){
@@ -383,7 +397,7 @@ export const getMpdClient = async (
   requestEvent: RequestEventBase<{ env: Env }>,
   options: { forceReconnect?: boolean } = {forceReconnect: false},
 ) => {
-  const secret = requestEvent.env.get('SECRET')!;
+  //const secret = requestEvent.env.get('SECRET')!;
 
   if (options?.forceReconnect) {
     // Forzar reinicialización: limpia la instancia actual
@@ -392,7 +406,7 @@ export const getMpdClient = async (
 
   if (!client) {
     const serverUrl = requestEvent.env.get('MPD_SERVER')!;
-    client = await connectClient(secret, serverUrl);
+    client = await connectClient(serverUrl);
   }
   return client;
 };
@@ -434,33 +448,6 @@ export type StatusData = {
   };
 
 export const emptyStatus: StatusData = {
-    volume: 75,
-    repeat: false,
-    random: true,
-    single: false,
-    consume: false,
-    playlist: 2,
-    playlistlength: 10,
-    mixrampdb: 0,
-    state: 'play',
-    song: 5,
-    songid: 123,
-    time: {
-      elapsed: 120,
-      total: 360
-    },
-    elapsed: 120.5,
-    bitrate: "192",
-    audio: {
-      sampleRate: 48000,
-      bits: 24,
-      channels: 2,
-      sample_rate_short: {
-        value: 48,
-        unit: 'kHz'
-      }
-    },
-    nextsong: 6,
-    nextsongid: 124
+    
   };
   

@@ -27,11 +27,12 @@ export const Song = component$<SongProps>(( {song, currentSong} ) => {
                         {formatTime(currentSong?.elapsed)} / {formatTime(currentSong?.total)}
                     </span>
                     </div>
+                    
                     <div class="h-2 mt-2 bg-blue-100 rounded">
                         <div
                             class="h-2 bg-blue-500 rounded transition-all"
                             style={{
-                                width: currentSong?.total
+                                width: currentSong.total
                                 ? `${Math.min(100, ((currentSong.elapsed || 0) / currentSong.total) * 100)}%`
                                 : '0%',
                             }}

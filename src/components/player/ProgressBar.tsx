@@ -1,11 +1,10 @@
 import { $, component$, type Signal } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
 import { formatTime } from "~/lib/song";
-import { getMpdClient } from '~/server/mpd';
+import { seek as mpdseek } from '~/server/mpd';
 
 const seek = server$(async function(elapsed: number) {
-    const mpd = await getMpdClient(this);
-    await mpd.seek(elapsed);
+    await mpdseek(elapsed);
 })
 
 
