@@ -1,15 +1,24 @@
-import { component$ } from "@builder.io/qwik";
-import type { DocumentHead } from "@builder.io/qwik-city";
+import { $, component$ } from "@builder.io/qwik";
+import { Link, type DocumentHead } from "@builder.io/qwik-city";
+import Welcome from "~/components/Welcome";
+import confetti from 'canvas-confetti';
 
 export default component$(() => {
 
+  const launchConfetti = $(() => {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+    });
+
   return (
     <>
-      <h1>Hi 👋</h1>
-      <div>
-        Can't wait to see what you build with qwik!
-        <br />
-      </div>
+      <Welcome />
+      <Link onClick$={launchConfetti} class="text-xl bg-brand-500 text-white p-2 rounded cursor-pointer" href="/queue">
+        Vamos a disfrutar de la música!
+      </Link>
     </>
   );
 });

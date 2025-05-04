@@ -1,14 +1,12 @@
 import { component$, $ } from '@builder.io/qwik';
 import confetti from 'canvas-confetti';
 import { playHere } from '~/server/mpd';
-//import { LuPlay, LuPause, LuVolume, LuVolume1, LuVolume2 } from "@qwikest/icons/lucide";
 
 export interface PlayHereProps {
   path: string;
 }
 
 export default component$((props: PlayHereProps) => {
-  // Función para lanzar confetti, envuelta en $ para lazy loading
   const launchConfetti = $(() => {
     confetti({
       particleCount: 100,

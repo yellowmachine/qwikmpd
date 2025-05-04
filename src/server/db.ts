@@ -6,17 +6,20 @@ import type { SettingsForm } from '~/lib/schemas';
 export type Data = SettingsForm;
 const dbFile = 'data/db.json';
 
+const defaultData: Data = {
+  server: { ip: '127.0.0.1' },
+  clients: [],
+  setupDone: false,
+  volume: 50,
+  latency: 100,
+};
+
 class LowdbAdapter {
   db: Low<Data>;
   
   constructor(filename = dbFile) {
-    this.db = new Low(new JSONFile<Data>(filename), {
-      server: { ip: '127.0.0.1' },
-      clients: [],
-      setupDone: false,
-      volume: 50,
-      latency: 100,
-    });
+    const adapter = new JSONFile<Data>(filename);
+    this.db = new Low<Data>(adapter, defaultData);
   }
 
   async load() {
@@ -62,12 +65,10 @@ class LowdbAdapter {
       });
   }
 
-  async initialize() {
-    try {
-      await access(dbFile); 
-      await this.db.read();
-    } catch (err) {
-      this.db.data = {} as Data;
+  async init() {
+    await this.db.read();
+    if (!this.db.data) {
+      this.db.data = defaultData;
       await this.db.write();
     }
   }
@@ -79,8 +80,7 @@ let adapter: LowdbAdapter | null = null;
 export async function getDb() {
   if(!adapter){
     adapter = new LowdbAdapter();
-    await adapter.db.write();
-    await adapter.initialize();
+    await adapter.init();
   }
   return adapter;
 }
