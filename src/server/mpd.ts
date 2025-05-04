@@ -245,7 +245,7 @@ async function getQueueMsg(client?: MPDApi.ClientAPI) {
   const list = await client?.api.queue.info() as AudioFile[];
   const status = await client?.api.status.get() as StatusData;
   const current = list.find(item => item.pos === status?.song);
-  
+
   return {queue: formatSongArray(list), currentSong: current?.file || ''};
 }
 
@@ -319,20 +319,6 @@ export const subscribe = server$(async function *f(){
   
 
   const timestamp = markSendIntent(id, ['status', 'queue']);
-
-  /*
-  await withMpdReconnect(async (client) => {
-    const statusData = client.api.status.get() as unknown as StatusData;
-    const queueData = await getQueueMsg(client);
-
-    try {
-      await send(id, { type: 'status', data: statusData }, timestamp);
-      await send(id, { type: 'queue', data: queueData }, timestamp);
-    } catch (error) {
-      console.error(`Error enviando datos iniciales a cliente ${id}:`, error);
-    }
-  });
-  */
 
   const client = await getMpdClient(this);
   const statusData = client.api.status.get() as unknown as StatusData;
