@@ -32,7 +32,7 @@ export default component$(() => {
     const result = v.safeParse(SetupSchema, values);
     if(result.success){
       await setup(values);
-      navigate('/queue');  
+      navigate('/');  
     }
   });
  
