@@ -7,6 +7,7 @@ export const Menu = component$(() => {
   const menuItems = [
     { href: '/queue', label: 'Cola' },
     { href: '/library', label: 'Biblioteca' },
+    { href: '/admin', label: 'Configuración' },
   ];
 
   return (

@@ -1,17 +1,13 @@
 import { $, component$, Slot, useSignal, useOnDocument, useVisibleTask$, useStore, type Signal } from "@builder.io/qwik";
-import { type StatusData, type QueueData, subscribe, emptyStatus, type MPDEvent, getMpdClient } from "~/server/mpd";
+import { type StatusData, type QueueData, subscribe, emptyStatus, type MPDEvent, 
+//  getMpdClient 
+} from "~/server/mpd";
 import {
   useContextProvider,
   createContextId,
 } from '@builder.io/qwik';
-import { routeLoader$ } from "@builder.io/qwik-city";
+import { Menu } from "~/components/menu/Menu";
 
-export const useInitialData = routeLoader$(async function (request){
-  const client = await getMpdClient(request, {forceReconnect: true});
-  return {
-    status: await client.api.status.get() as unknown as StatusData,
-  }
-})
 
 export const storesContext = createContextId<{queue: QueueData, state: StatusData, elapsed: Signal<number>}>('stores');
 
@@ -29,14 +25,6 @@ export default component$(() => {
   const elapsed = useSignal(state.time?.elapsed || 0);
   
   useContextProvider(storesContext, {queue, state, elapsed});
-  const initialData = useInitialData();
-
-  // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(() => {
-    Object.assign(state, {
-      ...initialData.value.status
-    });
-  })
 
   const connectToStream = $(async () => {
 
@@ -146,6 +134,7 @@ export default component$(() => {
       <div class="text-red-500">
         {warning.value}
       </div>
+      <Menu />
       <Slot />
     </div>
   );

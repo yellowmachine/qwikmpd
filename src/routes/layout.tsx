@@ -1,6 +1,5 @@
 import { component$, Slot } from "@builder.io/qwik";
 import { type RequestHandler } from "@builder.io/qwik-city";
-import { Menu } from "~/components/menu/Menu";
 import { getDb } from "~/server/db";
 
 
@@ -28,7 +27,6 @@ export default component$(() => {
 
   return (
     <div class="mx-auto max-w-3xl px-4 sm:px-6 md:w-1/2">
-      <Menu />
       <Slot />
     </div>
   );
