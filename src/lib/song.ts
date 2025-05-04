@@ -2,6 +2,7 @@ import { AudioFile, AudioFileMetadata } from "~/server/mpd";
 
 export type Song = {
     artist: string;
+    name: string;
     title: string;
     uri?: string;
     time: string | number;
@@ -23,7 +24,8 @@ export function formatSongArray(audios: (AudioFileMetadata | AudioFile)[]) {
             artist: audio.artist,
             title: audio.title || stripFolder(audio.file),
             uri: audio.file,
-            time: audio.time
+            time: audio.time,
+            name: audio.name
         }
     )) as Song[]
 }
