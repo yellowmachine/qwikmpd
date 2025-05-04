@@ -1,11 +1,13 @@
 import { RequestEventBase, server$ } from '@builder.io/qwik-city';
 import { ServerError } from '@builder.io/qwik-city/middleware/request-handler';
 import mpdApi, { type MPDApi } from 'mpd-api';
-import { s } from 'vitest/dist/reporters-5f784f42.js';
 import WaitQueue from 'wait-queue';
 import { formatSongArray, Song } from '~/lib/song';
+//import { exec as execCallback } from 'child_process';
+//import { promisify } from 'util';
 
-//export type MPDClient = MPDApi.ClientAPI;
+
+//const exec = promisify(execCallback);
 
 export function toBeIncluded(entry: string) {
   if(entry.startsWith('/')){
@@ -49,7 +51,7 @@ export function getFirstLevel(array: {directory: string, file: string[]}[], ruta
 }
 
 //// wrapper reconnect////////
-type MpClientFunction<Args extends any[], R> = (...args: Args) => Promise<R>;
+type MpClientFunction<Args extends any[], R> = (this: RequestEventBase, client: MPDApi.ClientAPI, ...args: Args) => Promise<R>;
 
 export function withMpdReconnect<Args extends any[], R>(
   fn: MpClientFunction<Args, R>,
@@ -70,7 +72,7 @@ export function withMpdReconnect<Args extends any[], R>(
 
       try {
         // Aquí client ya no es null, así que podemos pasar sin problema
-        return await fn(...args);
+        return await fn.apply(this, [client, ...args]);
       } catch (error: any) {
         if (isConnectionError(error)) {
           attempt++;
@@ -102,10 +104,26 @@ async function attemptReconnectionInBackground(context: any) {
   }
 }
 
+function getTimestamp(): number {
+  return Date.now();
+}
+
+const getEmptySubscriptorsHash = () => {
+  return {
+    warning: null,
+    ready: null,
+    queue: null,
+    status: null
+  }
+}
+
+
 ///////////
 
 let client: MPDApi.ClientAPI | null = null;
 let subscriptors: Record<number, WaitQueue<MPDEvent>> = {};
+type SHash = Record<MPDEvent['type'], number | null>
+let subscriptorsHash: Record<number, SHash> = {};
 let id = 0;
 let reconnectAttempts = 0;
 let maxReconnectAttempts = 5;
@@ -130,25 +148,39 @@ async function connectClient(serverUrl: string) {
 
           c.on('system', async (eventName: string) => {
             if (eventName === 'player' || eventName === 'mixer') {
-              const statusData = client?.api.status.get() as unknown as StatusData;
-              await broadcast({ type: 'status', data: statusData });
-              const queueData = await getQueueMsg(c);
-              await broadcast({ type: 'queue', data: queueData });
+              try {
+                const timestamp = markSendIntentBroadcast(['status', 'queue']);
+                const statusData = client?.api.status.get() as unknown as StatusData;
+                await broadcast({ type: 'status', data: statusData }, timestamp);
+                const queueData = await getQueueMsg(c);
+                await broadcast({ type: 'queue', data: queueData }, timestamp);
+              } catch (error) {
+                console.error('Error manejando evento system:', error);
+              }
             }
           });
-
-          // En vez de llamar a tryReconnect, manejamos reconexión aquí
+          
           c.on('error', async (err) => {
-            console.error('Error en MPD:', err);
-            await broadcast({ type: 'ready', data: false });
-            await reconnect();
+            try {
+              const timestamp = markSendIntentBroadcast('ready');
+              console.error('Error en MPD:', err);
+              await broadcast({ type: 'ready', data: false }, timestamp);
+              await reconnect();
+            } catch (error) {
+              console.error('Error manejando el evento error:', error);
+              // Opcional: lógica adicional para manejar fallos en broadcast o reconnect
+            }
           });
-
+          
           c.on('close', async () => {
-            console.log('Conexión MPD cerrada');
-            //broadcast({ type: 'ready', data: false });
-            await reconnect();
+            try {
+              console.log('Conexión MPD cerrada');
+              await reconnect();
+            } catch (error) {
+              console.error('Error manejando el evento close:', error);
+            }
           });
+          
 
           reconnectAttempts = 0; // conexión exitosa, reset contador
           
@@ -157,7 +189,11 @@ async function connectClient(serverUrl: string) {
           return client;
         }
       } catch (error) {
-        await broadcast({ type: 'warning', data: 'No se pudo conectar al servidor MPD. Intentando reconectar.' });
+        const timestamp = markSendIntentBroadcast('warning');
+        await broadcast({ 
+          type: 'warning', 
+          data: 'No se pudo conectar al servidor MPD. Intentando reconectar.' },
+        timestamp);
 
         reconnectAttempts++;
         console.error(`Error al conectar MPD (intento ${reconnectAttempts}):`, error);
@@ -176,9 +212,13 @@ async function connectClient(serverUrl: string) {
 
   // Función interna para reconectar con control de intentos
   async function reconnect() {
+    const timestamp = markSendIntentBroadcast('warning');
     if (reconnectAttempts >= maxReconnectAttempts) {
       console.error('No se puede reconectar: máximo de intentos alcanzado.');
-      await broadcast({ type: 'warning', data: 'No se puede reconectar:.maxcdn de intentos alcanzado.' });
+      await broadcast({ 
+        type: 'warning', 
+        data: 'No se puede reconectar:.maxcdn de intentos alcanzado.' }, timestamp,
+      );
       client = null;
       return;
     }
@@ -187,10 +227,10 @@ async function connectClient(serverUrl: string) {
     console.log(`Intentando reconectar MPD (intento ${reconnectAttempts})...`);
     try {
       client = await connectClient(serverUrl);
-      await broadcast({ type: 'ready', data: true });
+      await broadcast({ type: 'ready', data: true }, timestamp);
     } catch (e) {
       console.error('Error durante la reconexión:', e);
-      await broadcast({ type: 'warning', data: 'Error durante la reconexión...' });
+      await broadcast({ type: 'warning', data: 'Error durante la reconexión...' }, timestamp);
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await reconnect();
     }
@@ -205,9 +245,12 @@ async function getQueueMsg(client?: MPDApi.ClientAPI) {
   return {queue: formatSongArray(list), currentSong: current?.file || ''};
 }
 
-async function broadcast(msg: MPDEvent){ //deberia ser async
-  for(const q of Object.values(subscriptors)){
-      await q.push(msg);
+async function broadcast(msg: MPDEvent, timestampt: number){ //deberia ser async
+  //for(const q of Object.values(subscriptors)){
+  //    await q.push(msg);
+  //}
+  for(const [id, queue] of Object.entries(subscriptors)){
+    await send(Number(id), msg, timestampt);
   }
 }
 
@@ -215,16 +258,74 @@ async function addListener(){
   const _id = id++;
   const queue = new WaitQueue<MPDEvent>();
   subscriptors[_id] = queue;
+  subscriptorsHash[_id] = getEmptySubscriptorsHash();
   return { id: _id, queue };
 }
 
 function removeListener(id: number){
   delete subscriptors[id];
+  delete subscriptorsHash[id];
 
 }
 
+async function send(clientId: number, event: MPDEvent, originTimestamp: number) {
+  const h = subscriptorsHash[clientId];
+  const timestamp = h[event.type]; 
+  if(timestamp === originTimestamp){
+    await subscriptors[clientId].push(event);
+  }
+}
+
+function markSendIntentBroadcast(eventType: MPDEvent['type'] | MPDEvent['type'][]): number {
+  const timestamp = getTimestamp(); 
+
+  const events = Array.isArray(eventType) ? eventType : [eventType];
+
+  for (const h of Object.values(subscriptorsHash)) {
+    for(const event of events){
+      h[event] = timestamp;
+    }  
+  }
+
+  return timestamp;
+}
+
+
+function markSendIntent(clienteId: number, eventType: MPDEvent['type'] | MPDEvent['type'][]) {
+  const timestamp = getTimestamp();
+  
+  const h = subscriptorsHash[clienteId];
+  const events = Array.isArray(eventType) ? eventType : [eventType];
+  for(const event of events){
+    h[event] = timestamp;
+  }
+  return timestamp;
+}
+
+
 export const subscribe = server$(async function *f(){
   const { id, queue } = await addListener();
+
+  const timestamp = markSendIntent(id, ['status', 'queue']);
+
+  await withMpdReconnect(async (client) => {
+    const statusData = client.api.status.get() as unknown as StatusData;
+    const queueData = await getQueueMsg(client);
+
+    try {
+      await send(id, { type: 'status', data: statusData }, timestamp);
+      await send(id, { type: 'queue', data: queueData }, timestamp);
+    } catch (error) {
+      console.error(`Error enviando datos iniciales a cliente ${id}:`, error);
+    }
+  });
+
+  const client = await getMpdClient(this);
+  const statusData = client.api.status.get() as unknown as StatusData;
+  const queueData = await getQueueMsg(client);
+
+  await send(id, { type: 'status', data: statusData }, timestamp);
+  await send(id, { type: 'queue', data: queueData }, timestamp);
         
   try {
     while (true) {
@@ -276,16 +377,17 @@ export const clear = server$(async function(){
     await client.api.queue.clear();
 })
 
-export const playHere = server$(withMpdReconnect(async function(path: string){
+export const playHere = server$(withMpdReconnect(async function(client: MPDApi.ClientAPI,path: string){
     await clear();
     await load(path);
     await play();
 }))
 
-export const play = server$(async function(pos?: number){
-    const client = await getMpdClient(this);
-    await client?.api.playback.play((pos || 0) as unknown as string);
-})
+export const play = server$(withMpdReconnect(async function(client: MPDApi.ClientAPI, pos?: number){
+    await client.api.playback.play((pos || 0) as unknown as string);
+    restartSnapclient('192.168.1.56', 'miguel')
+    restartSnapclient('192.168.1.44', 'miguel')
+}))
 
 export const playThis = server$(async function(pos: number){
     const client = await getMpdClient(this);
@@ -451,3 +553,15 @@ export const emptyStatus: StatusData = {
     
 } as StatusData;
   
+
+export const restartSnapclient = async (host: string, username: string) => {
+  try {
+    //const { stdout, stderr } = await exec(`ssh ${username}@${host} "sudo systemctl restart snapclient"`);
+    //if (stderr) {
+    //  console.error(`Stderr: ${stderr}`);
+   // }
+    //console.log(`Stdout: ${stdout}`);
+  } catch (error: any) {
+    console.error(`Error: ${error.message}`);
+  }
+};
