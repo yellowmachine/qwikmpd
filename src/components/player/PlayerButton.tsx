@@ -10,7 +10,7 @@ export default component$(( {onClick$}: PlayerButtonProps ) => {
         <>
             <div class="">
                 <button onClick$={onClick$}
-                    class=""
+                    class="cursor-pointer"
                     
                 >
                     <Slot />

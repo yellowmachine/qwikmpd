@@ -6,15 +6,6 @@ import { type SettingsForm } from '~/lib/schemas';
 import { getDb } from '~/server/db';
 
 export const useSettingsLoader = routeLoader$<InitialValues<SettingsForm>>(async () => {
-  return {
-    clients: [],
-    server: {
-      ip: '192.168.1.56',
-    },
-    setupDone: true,
-    volume: 50,
-    latency: 100
-  }
   const db = await getDb();
   return await db.getData();
 });

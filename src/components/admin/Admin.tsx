@@ -4,6 +4,8 @@ import { SettingsSchema, type SettingsForm } from '~/lib/schemas';
 import { server$ } from '@builder.io/qwik-city';
 import { getDb } from '~/server/db';
 import { useSettingsLoader } from '~/routes/(app)/admin';
+import * as v from 'valibot';
+
 
 
 export const saveSettings = server$(async (values: SettingsForm) => {
@@ -19,10 +21,13 @@ export default component$(() => {
   });
 
   const handleSubmit: QRL<SubmitHandler<SettingsForm>> = $(async (values, event) => {
-    console.log(values);
     event.preventDefault();
-    await saveSettings(values);
-    alert('Configuración guardada correctamente');
+        
+    const result = v.safeParse(SettingsSchema, values);
+    if(result.success){
+      await saveSettings(values);
+      alert('Configuración guardada correctamente');  
+    }
   });
 
   return (
@@ -46,7 +51,6 @@ export default component$(() => {
           <div class="mb-4">
             <label class="block mb-1 font-semibold">Setup hecho?</label>
             <input {...props} type="checkbox" checked={field.value} class="border p-2 w-full" />
-            <p class="text-red-600 mt-1">ejemplo de error</p>
             {field.error && <p class="text-red-600 mt-1">{field.error}</p>}
           </div>
         )}
@@ -67,7 +71,7 @@ export default component$(() => {
                       )}
                   </Field>
               </div>
-              <button class="bg-red-300 text-white px-6 py-2 rounded mt-4" 
+              <button type="button" class="bg-red-300 text-white px-6 py-2 rounded mt-4" 
                 onClick$={() => remove(form, 'clients', {at: index})}>
                   Eliminar
               </button>
@@ -76,7 +80,7 @@ export default component$(() => {
         }
       </FieldArray>
 
-      <button class="bg-brand-600 text-white px-6 py-2 rounded mt-4 float-right" 
+      <button type="button" class="bg-brand-600 text-white px-6 py-2 rounded mt-4 float-right" 
         onClick$={() => insert(form, 'clients', {value: { ip: '' }})} >
           Añadir
       </button>

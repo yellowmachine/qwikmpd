@@ -3,11 +3,14 @@ import { ServerError } from '@builder.io/qwik-city/middleware/request-handler';
 import mpdApi, { type MPDApi } from 'mpd-api';
 import WaitQueue from 'wait-queue';
 import { formatSongArray, Song } from '~/lib/song';
-//import { exec as execCallback } from 'child_process';
-//import { promisify } from 'util';
 
 
-//const exec = promisify(execCallback);
+export const execCommand = server$(async (cmd: string) => {
+  const { exec } = await import('child_process');
+  const { promisify } = await import('util');
+  const execProm = promisify(exec);
+  return await execProm(cmd);
+});
 
 export function toBeIncluded(entry: string) {
   if(entry.startsWith('/')){
@@ -556,11 +559,11 @@ export const emptyStatus: StatusData = {
 
 export const restartSnapclient = async (host: string, username: string) => {
   try {
-    //const { stdout, stderr } = await exec(`ssh ${username}@${host} "sudo systemctl restart snapclient"`);
-    //if (stderr) {
-    //  console.error(`Stderr: ${stderr}`);
-   // }
-    //console.log(`Stdout: ${stdout}`);
+    const { stdout, stderr } = await execCommand(`ssh ${username}@${host} "sudo systemctl restart snapclient"`);
+    if (stderr) {
+      console.error(`Stderr: ${stderr}`);
+    }
+    console.log(`Stdout: ${stdout}`);
   } catch (error: any) {
     console.error(`Error: ${error.message}`);
   }
