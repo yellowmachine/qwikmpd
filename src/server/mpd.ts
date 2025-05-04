@@ -497,6 +497,7 @@ interface AudioFileFormat {
 
 export interface AudioFileMetadata {
   file: string;
+  name: string;
   last_modified: string; // ISO 8601 string
   format: AudioFileFormat;
   title: string;
@@ -524,6 +525,7 @@ type Format = {
 
 export type AudioFile = {
   file: string;
+  name: string;
   last_modified: string; // ISO 8601 string, podría usarse también Date si se parsea
   format: Format;
   artist: string;
