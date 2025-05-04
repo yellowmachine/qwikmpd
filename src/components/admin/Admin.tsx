@@ -7,7 +7,6 @@ import { useSettingsLoader } from '~/routes/(app)/admin';
 import * as v from 'valibot';
 
 
-
 export const saveSettings = server$(async (values: SettingsForm) => {
   const db = await getDb();
   await db.setData(values);

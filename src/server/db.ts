@@ -7,10 +7,16 @@ export type Data = SettingsForm;
 const dbFile = 'data/db.json';
 
 class LowdbAdapter {
-  db: Low<Data | null>;
+  db: Low<Data>;
   
   constructor(filename = dbFile) {
-    this.db = new Low(new JSONFile<Data | null>(filename), null);
+    this.db = new Low(new JSONFile<Data>(filename), {
+      server: { ip: '127.0.0.1' },
+      clients: [],
+      setupDone: false,
+      volume: 50,
+      latency: 100,
+    });
   }
 
   async load() {
@@ -73,6 +79,7 @@ let adapter: LowdbAdapter | null = null;
 export async function getDb() {
   if(!adapter){
     adapter = new LowdbAdapter();
+    await adapter.db.write();
     await adapter.initialize();
   }
   return adapter;
