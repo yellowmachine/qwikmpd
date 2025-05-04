@@ -72,7 +72,6 @@ let adapter: LowdbAdapter | null = null;
 
 export async function getDb() {
   if(!adapter){
-    console.log(1)
     adapter = new LowdbAdapter();
     await adapter.initialize();
   }
