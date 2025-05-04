@@ -15,8 +15,7 @@ export const useFormLoader = routeLoader$<InitialValues<SetupForm>>(() => ({
  
 const setup = server$(async function(values){
   const db = await getDb();
-  const password = "secret";
-  return await db.setSetupDone({...values, password});
+  return await db.setSetupDone({...values});
 })
  
 export default component$(() => {
