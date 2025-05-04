@@ -51,6 +51,7 @@ export default component$(() => {
             break;
           case 'warning':
             warning.value = value.data;
+            setTimeout(() => warning.value = '', 5000);
             break;
           case 'ready':
             ready.value = value.data;
@@ -102,8 +103,9 @@ export default component$(() => {
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({track}) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_] = track(() => [state.songid]);
-    console.log(_)
+    //console.log(_)
     elapsed.value = 0
   })
 

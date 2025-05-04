@@ -3,6 +3,7 @@ import { ServerError } from '@builder.io/qwik-city/middleware/request-handler';
 import mpdApi, { type MPDApi } from 'mpd-api';
 import WaitQueue from 'wait-queue';
 import { formatSongArray, Song } from '~/lib/song';
+import { getDb } from './db';
 
 
 export const execCommand = server$(async (cmd: string) => {
@@ -309,8 +310,17 @@ function markSendIntent(clienteId: number, eventType: MPDEvent['type'] | MPDEven
 export const subscribe = server$(async function *f(){
   const { id, queue } = await addListener();
 
+  this.cookie.set('listenerId', id.toString(), {
+    path: '/',
+    httpOnly: true,
+    secure: true,
+    maxAge: 60 * 60 * 24 * 7, // 1 semana
+  });
+  
+
   const timestamp = markSendIntent(id, ['status', 'queue']);
 
+  /*
   await withMpdReconnect(async (client) => {
     const statusData = client.api.status.get() as unknown as StatusData;
     const queueData = await getQueueMsg(client);
@@ -322,6 +332,7 @@ export const subscribe = server$(async function *f(){
       console.error(`Error enviando datos iniciales a cliente ${id}:`, error);
     }
   });
+  */
 
   const client = await getMpdClient(this);
   const statusData = client.api.status.get() as unknown as StatusData;
@@ -355,7 +366,23 @@ export const list = server$(async function(path: string){
     return { directories: list.directory.map(d => d.directory), files: formatSongArray(list.file), file: list.file, currentSong: current?.title};
 })
 
+export const listPlaylist = server$(async function(){
+    const client = await getMpdClient(this);
+    const list = await client?.api.playlists.get();
+    return list as {playlist: string}[];
+})
+
+export const loadPlaylist = server$(async function(name: string){
+    const client = await getMpdClient(this);
+    await clear();
+    await client.api.playlists.load(name);
+})
+
 export const add = server$(async function(path: string){
+    //const listenerIdCookie = this.cookie.get('listenerId');
+    //const listenerId = listenerIdCookie?.number;
+    // ahora puedo mandar un mensaje personalizado al usuario
+
     const client = await getMpdClient(this);
     await client?.api.queue.add(path);
 })
@@ -388,44 +415,53 @@ export const playHere = server$(withMpdReconnect(async function(client: MPDApi.C
 
 export const play = server$(withMpdReconnect(async function(client: MPDApi.ClientAPI, pos?: number){
     await client.api.playback.play((pos || 0) as unknown as string);
-    restartSnapclient('192.168.1.56', 'miguel')
-    restartSnapclient('192.168.1.44', 'miguel')
+    const db = await getDb();
+    const clients = (await db.getData()).clients;
+    clients.forEach(c => restartSnapclient(c.ip));
+  
 }))
 
 export const playThis = server$(async function(pos: number){
     const client = await getMpdClient(this);
-    await client?.api.playback.play(pos as unknown as string);
+    try{
+      await client.api.playback.play(pos as unknown as string);
+    }catch(e){
+      const timestamp = markSendIntentBroadcast('warning');
+      await broadcast({ type: 'warning', data: 'Error al reproducir la cancion' }, timestamp);
+      console.log(e);
+    }
+    
 })
 
 export const stop = server$(async function(){
     const client = await getMpdClient(this);
-    await client?.api.playback.stop();
+    await client.api.playback.stop();
 })
 
 export const pause = server$(async function(){
     const client = await getMpdClient(this);
-    await client?.api.playback.pause();
+    await client.api.playback.pause();
 })
 
 export const next = server$(async function(){
     const client = await getMpdClient(this);
-    await client?.api.playback.next();
+    await client.api.playback.next();
 })
 
 export const prev = server$(async function(){
     const client = await getMpdClient(this);
-    await client?.api.playback.prev();
+    await client.api.playback.prev();
 })
 
 export const seek = server$(async function(seconds: number){
     const client = await getMpdClient(this);
-    await client?.api.playback.seekcur(''+seconds);
+    await client.api.playback.seekcur(''+seconds);
 })
 
 export const setVolume = server$(async function(volume: number){
     if(volume < 0 || volume > 100) return;
     const client = await getMpdClient(this);
-    await client?.api.playback.setvol(''+volume);
+    await client.api.playback.setvol(''+volume);
 })
 
 
@@ -557,9 +593,15 @@ export const emptyStatus: StatusData = {
 } as StatusData;
   
 
-export const restartSnapclient = async (host: string, username: string) => {
+export const restartSnapclient = async (host: string, username?: string) => {
+  let cmd;
   try {
-    const { stdout, stderr } = await execCommand(`ssh ${username}@${host} "sudo systemctl restart snapclient"`);
+    if(username) {
+      cmd = `ssh ${username}@${host} "sudo systemctl restart snapclient"`
+    }else{
+      cmd = `ssh ${host} "sudo systemctl restart snapclient"`
+    }
+    const { stdout, stderr } = await execCommand(cmd);
     if (stderr) {
       console.error(`Stderr: ${stderr}`);
     }
