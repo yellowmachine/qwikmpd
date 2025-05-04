@@ -1,5 +1,6 @@
 import { component$ } from '@builder.io/qwik';
 import { Link, useLocation } from '@builder.io/qwik-city';
+import { LuSettings } from '@qwikest/icons/lucide';
 
 export const Menu = component$(() => {
   const location = useLocation();
@@ -7,8 +8,7 @@ export const Menu = component$(() => {
   const menuItems = [
     { href: '/queue', label: 'Cola' },
     { href: '/library', label: 'Biblioteca' },
-    { href: '/playlists', label: 'Playlists' },
-    { href: '/admin', label: 'Configuración' },
+    { href: '/playlists', label: 'Playlists' }
   ];
 
   return (
@@ -26,6 +26,11 @@ export const Menu = component$(() => {
             </Link>
           </li>
         ))}
+        <li>
+          <Link href="/admin" class="text-brand-500">
+            <LuSettings class="w-8 h-8" />
+          </Link>
+        </li>
       </ul>
     </nav>
   );
