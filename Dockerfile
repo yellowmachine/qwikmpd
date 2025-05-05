@@ -35,12 +35,12 @@ RUN pnpm run build
 FROM base AS final
 
 ENV NODE_ENV=production
-#ENV ORIGIN=https://example.com
+
+WORKDIR /app
+RUN mkdir -p /app/data && chown -R node:node /app/data
 
 # Usa usuario no root (opcional)
 USER node
-
-WORKDIR /app
 
 # Copia package.json para poder usar pnpm si hace falta
 COPY package.json .
