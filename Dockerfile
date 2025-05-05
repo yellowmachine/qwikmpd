@@ -39,6 +39,9 @@ ENV NODE_ENV=production
 WORKDIR /app
 RUN mkdir -p /app/data && chown -R node:node /app/data
 
+USER root
+RUN apk update && apk add --no-cache openssh-client
+
 # Usa usuario no root (opcional)
 USER node
 
