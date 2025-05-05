@@ -151,7 +151,8 @@ async function connectClient(serverUrl: string) {
           client = c; // salvo que los broadcast los saque al que llamo, debo hacer client = c
 
           c.on('system', async (eventName: string) => {
-            if (eventName === 'player' || eventName === 'mixer') {
+            //console.log('Evento system:', eventName);
+            if (eventName === 'player' || eventName === 'mixer' || eventName === 'playlist') {
               try {
                 const timestamp = markSendIntentBroadcast(['status', 'queue']);
                 const statusData = client?.api.status.get() as unknown as StatusData;
@@ -419,6 +420,27 @@ export const playThis = server$(async function(pos: number){
     
 })
 
+export const playUri = server$(async function(uri: string){
+  try{
+    await clear();
+    await add(uri);
+    await play();
+  }catch(e){
+    console.log(e);
+  }
+  
+})
+
+export const shuffle = server$(async function(){
+    const client = await getMpdClient(this);
+    await client.api.queue.shuffle();
+})
+
+export const repeat = server$(async function(){
+    const client = await getMpdClient(this);
+    await client.api.playback.repeat();
+})
+
 export const stop = server$(async function(){
     const client = await getMpdClient(this);
     await client.api.playback.stop();
@@ -427,6 +449,11 @@ export const stop = server$(async function(){
 export const pause = server$(async function(){
     const client = await getMpdClient(this);
     await client.api.playback.pause();
+})
+
+export const resume = server$(async function(){
+  const client = await getMpdClient(this);
+  await client.api.playback.resume();
 })
 
 export const next = server$(async function(){

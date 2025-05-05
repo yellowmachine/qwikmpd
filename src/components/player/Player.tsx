@@ -1,10 +1,11 @@
-import { component$, $, useContext } from '@builder.io/qwik';
-import { LuPlay, LuPause, LuStopCircle, LuVolume1, LuVolume2, LuArrowLeft, LuArrowRight } from "@qwikest/icons/lucide";
-import { play, pause, setVolume, stop, prev, next } from '~/server/mpd';
+import { component$, $, useContext, useSignal } from '@builder.io/qwik';
+import { LuPlay, LuPause, LuVolume1, LuVolume2, LuArrowLeft, LuArrowRight, LuSquare as Rectangle, LuMenu } from "@qwikest/icons/lucide";
+import { play, pause, setVolume, stop, prev, next, resume } from '~/server/mpd';
 import ProgressBar from './ProgressBar';
 import PlayerButton from './PlayerButton';
 import { Volume } from '../volume/Volume';
 import { storesContext } from '~/routes/(app)/layout';
+import { PopupMenu } from './PopupMenu';
 
 
 export interface PlayerProps {
@@ -16,6 +17,7 @@ export interface PlayerProps {
 export const Player = component$(( props: PlayerProps ) => {
 
     const { elapsed } = useContext(storesContext);
+    const showMenu = useSignal(false);
 
     const onPrev = $(async () => {
         await prev();
@@ -26,7 +28,10 @@ export const Player = component$(( props: PlayerProps ) => {
     });
 
     const onPlay = $(async () => {
-        await play();
+        if(props.state === 'pause')
+            await resume();
+        else
+            await play();
     });
 
     const onPause = $(async () => {
@@ -43,14 +48,14 @@ export const Player = component$(( props: PlayerProps ) => {
 
     return (
         <div class="flex flex-col items-center">
-            <div class="flex items-center gap-4 border-2 rounded-md p-4 bg-white text-orange-500 dark:bg-orange-500 dark:text-white mb-4">
+            <div class="flex items-center gap-2 border-2 rounded-md p-4 bg-white text-orange-500 dark:bg-orange-500 dark:text-white mb-4">
                 <PlayerButton onClick$={() => onPrev()}>
                     <LuArrowLeft class="w-8 h-8" />
                 </PlayerButton>
                
                 {(props.state === 'play' || props.state === 'pause') &&
                     <PlayerButton onClick$={onStop}>
-                        <LuStopCircle class="w-8 h-8" />
+                        <Rectangle class="w-8 h-8" />
                     </PlayerButton>
                 }
                 {props.state === 'play' ?
@@ -74,6 +79,15 @@ export const Player = component$(( props: PlayerProps ) => {
                 <PlayerButton onClick$={() => onNext()}>
                     <LuArrowRight class="w-8 h-8" />
                 </PlayerButton> 
+                <PlayerButton onClick$={() => showMenu.value = !showMenu.value}>
+                    <div class="relative">
+                        <LuMenu class="w-8 h-8" />
+                        {showMenu.value && 
+                            <PopupMenu />
+                        }
+                    </div>
+                </PlayerButton>
+
             </div>
             <ProgressBar total={props.total} elapsed={elapsed} />
         </div>
