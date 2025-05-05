@@ -151,7 +151,8 @@ async function connectClient(serverUrl: string) {
           client = c; // salvo que los broadcast los saque al que llamo, debo hacer client = c
 
           c.on('system', async (eventName: string) => {
-            if (eventName === 'player' || eventName === 'mixer') {
+            //console.log('Evento system:', eventName);
+            if (eventName === 'player' || eventName === 'mixer' || eventName === 'playlist') {
               try {
                 const timestamp = markSendIntentBroadcast(['status', 'queue']);
                 const statusData = client?.api.status.get() as unknown as StatusData;
@@ -430,6 +431,15 @@ export const playUri = server$(async function(uri: string){
   
 })
 
+export const shuffle = server$(async function(){
+    const client = await getMpdClient(this);
+    await client.api.queue.shuffle();
+})
+
+export const repeat = server$(async function(){
+    const client = await getMpdClient(this);
+    await client.api.playback.repeat();
+})
 
 export const stop = server$(async function(){
     const client = await getMpdClient(this);
