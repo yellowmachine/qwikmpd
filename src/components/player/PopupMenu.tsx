@@ -13,7 +13,7 @@ export const PopupMenu = component$(() => {
     });
 
     return <>
-        <div aria-label="acciones" role="menu" class="absolute left-0 top-full mt-2 z-50">
+        <div aria-label="acciones" role="menu" class="absolute right-0 top-full mt-2 z-50">
             <div class="bg-white rounded-lg shadow-lg p-4 w-40">
                 <div class="flex flex-col gap-2">
                     <ActionButton action={onShuffle} successMessage="ok" >

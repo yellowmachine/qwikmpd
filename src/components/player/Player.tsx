@@ -48,7 +48,7 @@ export const Player = component$(( props: PlayerProps ) => {
 
     return (
         <div class="flex flex-col items-center">
-            <div class="flex items-center gap-4 border-2 rounded-md p-4 bg-white text-orange-500 dark:bg-orange-500 dark:text-white mb-4">
+            <div class="flex items-center gap-2 border-2 rounded-md p-4 bg-white text-orange-500 dark:bg-orange-500 dark:text-white mb-4">
                 <PlayerButton onClick$={() => onPrev()}>
                     <LuArrowLeft class="w-8 h-8" />
                 </PlayerButton>
