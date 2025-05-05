@@ -1,6 +1,6 @@
 import { component$, $, useContext } from '@builder.io/qwik';
 import { LuPlay, LuPause, LuStopCircle, LuVolume1, LuVolume2, LuArrowLeft, LuArrowRight } from "@qwikest/icons/lucide";
-import { play, pause, setVolume, stop, prev, next } from '~/server/mpd';
+import { play, pause, setVolume, stop, prev, next, resume } from '~/server/mpd';
 import ProgressBar from './ProgressBar';
 import PlayerButton from './PlayerButton';
 import { Volume } from '../volume/Volume';
@@ -26,7 +26,10 @@ export const Player = component$(( props: PlayerProps ) => {
     });
 
     const onPlay = $(async () => {
-        await play();
+        if(props.state === 'pause')
+            await resume();
+        else
+            await play();
     });
 
     const onPause = $(async () => {

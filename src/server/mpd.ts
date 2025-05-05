@@ -419,6 +419,18 @@ export const playThis = server$(async function(pos: number){
     
 })
 
+export const playUri = server$(async function(uri: string){
+  try{
+    await clear();
+    await add(uri);
+    await play();
+  }catch(e){
+    console.log(e);
+  }
+  
+})
+
+
 export const stop = server$(async function(){
     const client = await getMpdClient(this);
     await client.api.playback.stop();
@@ -427,6 +439,11 @@ export const stop = server$(async function(){
 export const pause = server$(async function(){
     const client = await getMpdClient(this);
     await client.api.playback.pause();
+})
+
+export const resume = server$(async function(){
+  const client = await getMpdClient(this);
+  await client.api.playback.resume();
 })
 
 export const next = server$(async function(){
