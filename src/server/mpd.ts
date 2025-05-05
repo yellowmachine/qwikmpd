@@ -404,8 +404,9 @@ export const play = server$(withMpdReconnect(async function(client: MPDApi.Clien
     await client.api.playback.play((pos || 0) as unknown as string);
     const db = await getDb();
     const clients = (await db.getData()).clients;
-    clients.forEach(c => restartSnapclient(c.ip));
-  
+    for(let c of clients){
+      await restartSnapclient(c.ip);
+    }
 }))
 
 export const playThis = server$(async function(pos: number){
@@ -475,6 +476,14 @@ export const setVolume = server$(async function(volume: number){
     if(volume < 0 || volume > 100) return;
     const client = await getMpdClient(this);
     await client.api.playback.setvol(''+volume);
+})
+
+export const restartSnapClients = server$(async function(){
+  const db = await getDb();
+  const clients = (await db.getData()).clients;
+  for(let c of clients){
+    await restartSnapclient(c.ip);
+  }
 })
 
 
@@ -609,6 +618,7 @@ export const emptyStatus: StatusData = {
   
 
 export const restartSnapclient = async (host: string, username?: string) => {
+  
   let cmd;
   try {
     if(username) {
