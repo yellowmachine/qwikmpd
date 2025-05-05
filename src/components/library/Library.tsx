@@ -36,14 +36,17 @@ export const Library = component$(({initialData}: LibraryProps) => {
 
     return (
         <>
-            {history.value.length > 1 && 
-                <button class="mb-2 cursor-pointer bg-brand-200 hover:bg-brand-300" onClick$={goBack$} >[..]</button>
-            }
             {files.value.length > 0 && 
                 <PlayHere path={history.value[history.value.length - 1]} />
             }
+            {history.value.length > 1 && 
+                <div class="p-2">
+                    <button class="mb-2 p-2 cursor-pointer bg-brand-200 hover:bg-brand-300 text-white" onClick$={goBack$} >[..]</button>
+                    <span class="mb-2 p-2 text-brand-500 text-xl">{history.value.join('/')}</span>
+                </div>
+            }
             {directories.value.map((dir) => (
-                <div key={dir} class="mb-2 cursor-pointer bg-brand-200 hover:bg-brand-300">
+                <div key={dir} class="mb-2 cursor-pointer bg-brand-200 hover:bg-brand-300 p-2 text-white text-xl">
                     <button class="cursor-pointer" onClick$={() => goPath$(dir)}>{dir}</button>
                 </div>
                 

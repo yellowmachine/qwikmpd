@@ -626,7 +626,6 @@ export const restartSnapclient = async (host: string, username?: string) => {
     }else{
       cmd = `ssh ${host} "sudo systemctl restart snapclient"`
     }
-    console.log(cmd)
     const { stdout, stderr } = await execCommand(cmd);
     if (stderr) {
       console.error(`Stderr: ${stderr}`);
