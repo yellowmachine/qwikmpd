@@ -1,5 +1,5 @@
 import { component$, $, useContext } from '@builder.io/qwik';
-import { LuPlay, LuPause, LuStopCircle, LuVolume1, LuVolume2, LuArrowLeft, LuArrowRight } from "@qwikest/icons/lucide";
+import { LuPlay, LuPause, LuVolume1, LuVolume2, LuArrowLeft, LuArrowRight, LuSquare as Rectangle } from "@qwikest/icons/lucide";
 import { play, pause, setVolume, stop, prev, next, resume } from '~/server/mpd';
 import ProgressBar from './ProgressBar';
 import PlayerButton from './PlayerButton';
@@ -53,7 +53,7 @@ export const Player = component$(( props: PlayerProps ) => {
                
                 {(props.state === 'play' || props.state === 'pause') &&
                     <PlayerButton onClick$={onStop}>
-                        <LuStopCircle class="w-8 h-8" />
+                        <Rectangle class="w-8 h-8" />
                     </PlayerButton>
                 }
                 {props.state === 'play' ?
