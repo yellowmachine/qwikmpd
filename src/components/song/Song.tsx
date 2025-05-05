@@ -1,5 +1,6 @@
 import { $, component$, useSignal, useStore,  } from '@builder.io/qwik';
-import { formatTime, type Song as TSong } from '~/lib/song';
+import { formatTime } from '~/lib/song';
+import type { Song as TSong } from '~/lib/types';
 import { SongPopUp } from './SongPopup';
 import { playThis } from '~/server/mpd';
 

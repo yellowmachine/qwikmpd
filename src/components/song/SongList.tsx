@@ -1,5 +1,5 @@
 import { component$,  } from '@builder.io/qwik';
-import type { Song as TSong } from '~/lib/song';
+import type { Song as TSong } from '~/lib/types';
 import { Song } from './Song';
 
 export interface SongListProps {

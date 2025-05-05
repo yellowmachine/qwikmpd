@@ -1,7 +1,7 @@
 import { $, component$, useSignal } from "@builder.io/qwik";
 import { list } from "#mpd";
 import { SongList } from "../song/SongList";
-import type { Song } from "~/lib/song";
+import type { Song } from '~/lib/types';
 import PlayHere from "../player/PlayHere";
 
 

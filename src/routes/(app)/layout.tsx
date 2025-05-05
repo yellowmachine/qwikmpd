@@ -1,7 +1,8 @@
 import { $, component$, Slot, useSignal, useOnDocument, useVisibleTask$, useStore, type Signal } from "@builder.io/qwik";
-import { type StatusData, type QueueData, subscribe, emptyStatus, type MPDEvent, 
+import { type QueueData, subscribe, type MPDEvent, emptyStatus, 
 //  getMpdClient 
 } from "~/server/mpd";
+import type { StatusData } from "~/lib/types";
 import {
   useContextProvider,
   createContextId,
