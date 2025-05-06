@@ -346,6 +346,11 @@ export const queue = server$(async function(){
   return msg;
 }) 
 
+export const update = server$(async function(){
+  const client = await getMpdClient(this);
+  await client.api.db.update();
+})
+
 export const list = server$(async function(path: string){
     const client = await getMpdClient(this);
     const list = await client?.api.db.lsinfo(path) as LsInfo;

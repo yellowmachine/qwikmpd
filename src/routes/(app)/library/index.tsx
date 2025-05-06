@@ -15,7 +15,6 @@ export default component$(() => {
 
     return (
         <>
-            <h1>Library</h1>
             <Library initialData={initialData.value} />
         </>
     );

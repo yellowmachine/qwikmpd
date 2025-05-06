@@ -1,8 +1,9 @@
 import { $, component$, useSignal } from "@builder.io/qwik";
-import { list } from "#mpd";
+import { list, update } from "#mpd";
 import { SongList } from "../song/SongList";
 import type { Song } from '~/lib/types';
 import PlayHere from "../player/PlayHere";
+import { ActionButton } from "../action-button/action-button";
 
 
 const loadPath = async function(path: string){
@@ -34,6 +35,10 @@ export const Library = component$(({initialData}: LibraryProps) => {
         directories.value = result.directory;
     })
 
+    const updateLibrary = $(async () => {
+        await update();
+    })
+
     return (
         <>
             {files.value.length > 0 && 
@@ -45,6 +50,14 @@ export const Library = component$(({initialData}: LibraryProps) => {
                     <span class="mb-2 p-2 text-brand-500 text-xl">{history.value.join('/')}</span>
                 </div>
             }
+            <h1 class="text-3xl text-brand-300 mb-4">
+                <span>Library</span>
+                <ActionButton action={$(() => updateLibrary())} successMessage="ok">
+                    <div class="mb-2 cursor-pointer bg-red-200 hover:bg-brand-300 p-2 text-white text-xl float float-right">
+                        Actualizar base de datos
+                    </div>
+                </ActionButton>
+            </h1>
             {directories.value.map((dir) => (
                 <div key={dir} class="mb-2 cursor-pointer bg-brand-200 hover:bg-brand-300 p-2 text-white text-xl">
                     <button class="cursor-pointer" onClick$={() => goPath$(dir)}>{dir}</button>
