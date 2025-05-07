@@ -518,7 +518,7 @@ export const getMpdClient = async (
   }
 
   if (!client) {
-    const serverUrl = requestEvent.env.get('MPD_SERVER') || 'localhost';
+    const serverUrl = requestEvent.env.get('MPD_SERVER') || 'mpd';
     client = await connectClient(serverUrl);
   }
   return client;
