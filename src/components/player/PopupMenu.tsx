@@ -1,6 +1,6 @@
 import { $, component$ } from "@builder.io/qwik";
 import { ActionButton } from "../action-button/action-button";
-import { shuffle, repeat, restartSnapClients } from '~/server/mpd';
+import { shuffle, repeat } from '~/server/mpd';
 
 
 export const PopupMenu = component$(() => {
@@ -12,9 +12,9 @@ export const PopupMenu = component$(() => {
         await shuffle();
     });
 
-    const onRestart = $(async () => {
-        await restartSnapClients();
-    });
+    //const onRestart = $(async () => {
+    //    await restartSnapClients();
+    //});
 
     return <>
         <div aria-label="acciones" role="menu" class="absolute right-0 top-full mt-2 z-50">
@@ -30,11 +30,12 @@ export const PopupMenu = component$(() => {
                             repeat
                         </button>
                     </ActionButton>
-                    <ActionButton action={onRestart} successMessage="yes, ok" >
+                    {/*<ActionButton action={onRestart} successMessage="yes, ok" >
                         <button class="bg-white text-gray-600 hover:bg-gray-300 transition px-4 rounded" >
                             reiniciar snapclients
                         </button>
                     </ActionButton>
+                    */}
                 </div>
             </div>
       </div>

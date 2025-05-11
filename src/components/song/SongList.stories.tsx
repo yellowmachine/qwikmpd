@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "storybook-framework-qwik";
 import { SongList, type SongListProps } from "./SongList";
-import type { Song as TSong } from "~/lib/song";
+import type { Song as TSong } from '~/lib/types';
 
 const meta: Meta<SongListProps> = {
   component: SongList,

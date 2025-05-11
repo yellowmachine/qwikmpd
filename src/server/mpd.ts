@@ -2,8 +2,10 @@ import { RequestEventBase, server$ } from '@builder.io/qwik-city';
 import { ServerError } from '@builder.io/qwik-city/middleware/request-handler';
 import mpdApi, { type MPDApi } from 'mpd-api';
 import WaitQueue from 'wait-queue';
-import { formatSongArray, Song } from '~/lib/song';
+import { formatSongArray } from '~/lib/song';
+import type { Song } from '~/lib/types';
 import { getDb } from './db';
+import type { StatusData, LsInfo, AudioFile } from '~/lib/types';
 
 
 export const execCommand = server$(async (cmd: string) => {
@@ -344,6 +346,11 @@ export const queue = server$(async function(){
   return msg;
 }) 
 
+export const update = server$(async function(){
+  const client = await getMpdClient(this);
+  await client.api.db.update();
+})
+
 export const list = server$(async function(path: string){
     const client = await getMpdClient(this);
     const list = await client?.api.db.lsinfo(path) as LsInfo;
@@ -404,9 +411,9 @@ export const play = server$(withMpdReconnect(async function(client: MPDApi.Clien
     await client.api.playback.play((pos || 0) as unknown as string);
     const db = await getDb();
     const clients = (await db.getData()).clients;
-    for(let c of clients){
-      await restartSnapclient(c.ip);
-    }
+    //for(let c of clients){
+    //  await restartSnapclient(c.ip);
+    //}
 }))
 
 export const playThis = server$(async function(pos: number){
@@ -496,67 +503,9 @@ type ReadyEvent = { type: 'ready', data: boolean}
 export type MPDEvent = QueueEvent | StatusEvent | WarningEvent | ReadyEvent;
 
 
-interface Env {
-    [key: string]: string;
-}
-
-interface AudioFileFormat {
-  container?: string;
-  codec?: string;
-  codecProfile?: string;
-  tagTypes?: string[];
-  duration?: number;
-  bitrate?: number;
-  sampleRate?: number;
-  bitsPerSample?: number;
-  lossless?: boolean;
-  numberOfChannels?: number;
-  creationTime?: Date;
-  modificationTime?: Date;
-  trackGain?: number;
-  albumGain?: number;
-}
-
-export interface AudioFileMetadata {
-  file: string;
-  name: string;
-  last_modified: string; // ISO 8601 string
-  format: AudioFileFormat;
-  title: string;
-  artist: string;
-  album: string;
-  genre: string;
-  albumartist: string;
-  composer: string;
-  disc: number;
-  date: string;
-  track: number;
-  time: number;
-  duration: number;
-}
-
-export type LsInfo = {playlist: [], file: AudioFileMetadata[], directory: {directory: string, last_modified: string}[]};
-
-type Format = {
-  sample_rate: number;
-  bits: number;
-  channels: number;
-  sample_rate_short: Record<string, any>; // No se especifica la forma exacta, por eso se usa Record
-  original_value: string;
-}
-
-export type AudioFile = {
-  file: string;
-  name: string;
-  last_modified: string; // ISO 8601 string, podría usarse también Date si se parsea
-  format: Format;
-  artist: string;
-  title: string;
-  time: number;
-  duration: number;
-  pos: number;
-  id: number;
-}
+//interface Env {
+//    [key: string]: string;
+//}
 
 export const getMpdClient = async (
   requestEvent: RequestEventBase<QwikCityPlatform>,
@@ -569,48 +518,11 @@ export const getMpdClient = async (
   }
 
   if (!client) {
-    const serverUrl = requestEvent.env.get('MPD_SERVER') || 'localhost';
+    const serverUrl = requestEvent.env.get('MPD_SERVER') || 'mpd';
     client = await connectClient(serverUrl);
   }
   return client;
 };
-
-
-export type StatusData = {
-    currentSong?: {
-      title: string,
-      artist: string
-    },
-    volume: number;
-    repeat: boolean;
-    random: boolean;
-    single: boolean;
-    consume: boolean;
-    playlist: number;
-    playlistlength: number;
-    mixrampdb: number;
-    state: 'play' | 'stop' | 'pause';
-    song: number;
-    songid: number;
-    time?: {
-      elapsed: number;
-      total: number;
-    };
-    elapsed: number;
-    bitrate: string;
-    audio: {
-      sampleRate: number;
-      bits: number;
-      channels: number;
-      sample_rate_short: {
-        value: number;
-        unit: 'kHz';
-      };
-    };
-    nextsong: number;
-    nextsongid: number;
-  };
-
 
 export const emptyStatus: StatusData = {
     

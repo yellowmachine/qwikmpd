@@ -1,7 +1,9 @@
-import { access } from 'node:fs/promises';
+//import { access } from 'node:fs/promises';
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
 import type { SettingsForm } from '~/lib/schemas';
+import AwaitLock from 'await-lock';
+
 
 export type Data = SettingsForm;
 const dbFile = 'data/db.json';
@@ -16,10 +18,12 @@ const defaultData: Data = {
 
 class LowdbAdapter {
   db: Low<Data>;
+  lock: AwaitLock;
   
   constructor(filename = dbFile) {
     const adapter = new JSONFile<Data>(filename);
     this.db = new Low<Data>(adapter, defaultData);
+    this.lock = new AwaitLock();  
   }
 
   async load() {
@@ -28,20 +32,19 @@ class LowdbAdapter {
 
   async getData() {
     await this.load();
-    //return stripPasswords(this.db.data!);
     return this.db.data as Data;
 
-  }
-
-  async getDataWithPassword(): Promise<Data> { 
-    await this.load();
-    return this.db.data as Data;
   }
 
   async setData(data: Partial<Data>) { 
-    await this.load();
-    this.db.data = { ...this.db.data!, ...data };
-    await this.db.write();
+    await this.lock.acquireAsync();
+    try{
+      await this.load();
+      this.db.data = { ...this.db.data!, ...data };
+      await this.db.write();
+    }finally{
+      this.lock.release();
+    }
   }
 
   async getVolume() {
@@ -53,8 +56,9 @@ class LowdbAdapter {
   }
 
   async getSetupDone() {
-    const data = await this.getData();
-    return data.setupDone;
+    return true;
+    //const data = await this.getData();
+    //return data.setupDone;
   }
 
   async setSetupDone({ip}: {ip: string}) {

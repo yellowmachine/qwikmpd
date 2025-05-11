@@ -71,6 +71,7 @@
   "dependencies": {
     "@fastify/compress": "^6.2.1",
     "@fastify/static": "^6.10.1",
+    "await-lock": "^3.0.0",
     "canvas-confetti": "^1.9.3",
     "fastify": "^4.17.0",
     "fastify-plugin": "^4.5.0",

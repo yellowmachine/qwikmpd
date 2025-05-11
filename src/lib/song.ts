@@ -1,13 +1,4 @@
-import { AudioFile, AudioFileMetadata } from "~/server/mpd";
-
-export type Song = {
-    artist: string;
-    name: string;
-    title: string;
-    uri?: string;
-    time: string | number;
-};
-
+import type { AudioFile, AudioFileMetadata, Song } from "./types";
 
 export function formatSong(line: string) {
     const [artist, title, id, uri, time] = line.trim().split('\\').map(c => c.trim());
