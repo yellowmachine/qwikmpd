@@ -1,4 +1,4 @@
-import { $, component$, useSignal } from "@builder.io/qwik";
+import { $, component$, useSignal, useStore } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
 
 // Puedes adaptar esto a tu backend, aquí te muestro cómo sería la llamada fetch
@@ -26,9 +26,22 @@ export interface VolumeBarProps {
 export default component$(({ volume, clientId }: VolumeBarProps) => {
 
     const internalVolume = useSignal(volume);
+    const debounceStore = useStore({ timeoutId: undefined as any });
+    
+    const debouncedSetVolume = $(async (newVolume: number) => {
+      if (debounceStore.timeoutId) {
+        clearTimeout(debounceStore.timeoutId);
+      }
+      debounceStore.timeoutId = setTimeout(async () => {
+        await setVolume(clientId, newVolume);
+      }, 50); // 300 ms de debounce, ajusta según necesidad
+    });
+
 
     const onInput = $(async (event: Event) => {
-        internalVolume.value = Number((event.target as HTMLInputElement).value);
+        const newVolume = Number((event.target as HTMLInputElement).value);
+        internalVolume.value = newVolume;
+        await debouncedSetVolume(newVolume);
     });
 
     const onChange = $(async (event: Event) => {
