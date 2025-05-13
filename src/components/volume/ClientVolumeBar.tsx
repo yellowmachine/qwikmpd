@@ -1,9 +1,10 @@
 import { $, component$, useSignal, useStore } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
 
-// Puedes adaptar esto a tu backend, aquí te muestro cómo sería la llamada fetch
-const setVolume = server$(async (clientId: string, percent: number) => {
-  await fetch('http://snapserver.casa:1780/jsonrpc', {
+const setVolume = server$(async function (clientId: string, percent: number){
+  const snapserverUrl = this.env.get('SNAPSERVER_URL') || 'snapserver';
+  
+  await fetch(`http://${snapserverUrl}:1780/jsonrpc`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -34,7 +35,7 @@ export default component$(({ volume, clientId }: VolumeBarProps) => {
       }
       debounceStore.timeoutId = setTimeout(async () => {
         await setVolume(clientId, newVolume);
-      }, 50); // 300 ms de debounce, ajusta según necesidad
+      }, 50);
     });
 
 
