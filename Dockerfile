@@ -17,8 +17,8 @@ FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
 
 # Usa cache mount para acelerar instalación
-RUN --mount=type=cache,target=/root/.pnpm-store \
-    pnpm install --frozen-lockfile
+#RUN --mount=type=cache,target=/root/.pnpm-store \
+RUN    pnpm install --frozen-lockfile
 
 ################################################################################
 # Etapa para construir la aplicación

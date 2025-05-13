@@ -346,6 +346,11 @@ export const queue = server$(async function(){
   return msg;
 }) 
 
+export const update = server$(async function(){
+  const client = await getMpdClient(this);
+  await client.api.db.update();
+})
+
 export const list = server$(async function(path: string){
     const client = await getMpdClient(this);
     const list = await client?.api.db.lsinfo(path) as LsInfo;
@@ -513,7 +518,7 @@ export const getMpdClient = async (
   }
 
   if (!client) {
-    const serverUrl = requestEvent.env.get('MPD_SERVER') || 'localhost';
+    const serverUrl = requestEvent.env.get('MPD_SERVER') || 'mpd';
     client = await connectClient(serverUrl);
   }
   return client;
