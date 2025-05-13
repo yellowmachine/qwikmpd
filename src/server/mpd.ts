@@ -6,6 +6,8 @@ import { formatSongArray } from '~/lib/song';
 import type { Song } from '~/lib/types';
 import { getDb } from './db';
 import type { StatusData, LsInfo, AudioFile } from '~/lib/types';
+import { spawn } from "child_process";
+
 
 
 export const execCommand = server$(async (cmd: string) => {
@@ -119,7 +121,9 @@ const getEmptySubscriptorsHash = () => {
     warning: null,
     ready: null,
     queue: null,
-    status: null
+    status: null,
+    stderr: null,
+    stdout: null
   }
 }
 
@@ -485,22 +489,50 @@ export const setVolume = server$(async function(volume: number){
     await client.api.playback.setvol(''+volume);
 })
 
-export const restartSnapClients = server$(async function(){
-  const db = await getDb();
-  const clients = (await db.getData()).clients;
-  for(let c of clients){
-    await restartSnapclient(c.ip);
-  }
+export const updateLog = server$(async function(type: 'stdout' | 'stderr', data: string){
+  const timestamp = markSendIntentBroadcast(type);
+  await broadcast({ type, data }, timestamp);
 })
 
+export const updateAppViaSSHStream = server$(function (){
+    const host = this.env.get('SSH_HOST');
+    const user = this.env.get('SSH_USER');
+    const scriptPath = this.env.get('SCRIPT_UPDATE_APP_PATH');
+
+    if(!scriptPath) {
+        throw "No se ha configurado la ruta del script de actualización";
+    }
+  
+    const ssh = spawn("ssh", [`${user}@${host}`, scriptPath]);
+
+    ssh.stdout.on("data", (data) => {
+        updateLog("stdout", data.toString());
+    });
+
+    ssh.stderr.on("data", (data) => {
+        updateLog("stderr", data.toString());
+    });
+
+    ssh.on("close", (code) => {
+        updateLog("stdout", `Proceso finalizado con código ${code}\n`);
+    });
+
+    ssh.on('error', (err) => {
+      console.error('Error en proceso SSH:', err);
+      updateLog("stderr", "Error en proceso SSH: " + err.message);
+    });
+    
+});
 
 export type QueueData = {queue: Song[], currentSong: string};
 type QueueEvent = { type: 'queue', data: QueueData}
 type StatusEvent = { type: 'status', data: StatusData}
 type WarningEvent = { type: 'warning', data: string}
 type ReadyEvent = { type: 'ready', data: boolean}
+type StdoutEvent = { type: 'stdout', data: string}
+type StderrEvent = { type: 'stderr', data: string}
 
-export type MPDEvent = QueueEvent | StatusEvent | WarningEvent | ReadyEvent;
+export type MPDEvent = QueueEvent | StatusEvent | WarningEvent | ReadyEvent | StdoutEvent | StderrEvent;
 
 
 //interface Env {
@@ -528,22 +560,3 @@ export const emptyStatus: StatusData = {
     
 } as StatusData;
   
-
-export const restartSnapclient = async (host: string, username?: string) => {
-  
-  let cmd;
-  try {
-    if(username) {
-      cmd = `ssh ${username}@${host} "sudo systemctl restart snapclient"`
-    }else{
-      cmd = `ssh ${host} "sudo systemctl restart snapclient"`
-    }
-    const { stdout, stderr } = await execCommand(cmd);
-    if (stderr) {
-      console.error(`Stderr: ${stderr}`);
-    }
-    console.log(`Stdout: ${stdout}`);
-  } catch (error: any) {
-    console.error(`Error: ${error.message}`);
-  }
-};
