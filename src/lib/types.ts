@@ -98,3 +98,33 @@ export type StatusData = {
     uri?: string;
     time: string | number;
 };
+
+export interface SnapcastClient {
+    config: {
+      instance: number;
+      latency: number;
+      name: string;
+      volume: {
+        muted: boolean;
+        percent: number;
+      };
+    };
+    connected: boolean;
+    host: {
+      arch: string;
+      ip: string;
+      mac: string;
+      name: string;
+      os: string;
+    };
+    id: string;
+    lastSeen: {
+      sec: number;
+      usec: number;
+    };
+    snapclient: {
+      name: string;
+      protocolVersion: number;
+      version: string;
+    };
+  }

@@ -1,9 +1,10 @@
-import { $, component$, useSignal } from "@builder.io/qwik";
+import { $, component$, useSignal, useStore } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
 
-// Puedes adaptar esto a tu backend, aquí te muestro cómo sería la llamada fetch
-const setVolume = server$(async (clientId: string, percent: number) => {
-  await fetch('http://snapserver.casa:1780/jsonrpc', {
+const setVolume = server$(async function (clientId: string, percent: number){
+  const snapserverUrl = this.env.get('SNAPSERVER_URL') || 'snapserver';
+  
+  await fetch(`http://${snapserverUrl}:1780/jsonrpc`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -26,9 +27,22 @@ export interface VolumeBarProps {
 export default component$(({ volume, clientId }: VolumeBarProps) => {
 
     const internalVolume = useSignal(volume);
+    const debounceStore = useStore({ timeoutId: undefined as any });
+    
+    const debouncedSetVolume = $(async (newVolume: number) => {
+      if (debounceStore.timeoutId) {
+        clearTimeout(debounceStore.timeoutId);
+      }
+      debounceStore.timeoutId = setTimeout(async () => {
+        await setVolume(clientId, newVolume);
+      }, 50);
+    });
+
 
     const onInput = $(async (event: Event) => {
-        internalVolume.value = Number((event.target as HTMLInputElement).value);
+        const newVolume = Number((event.target as HTMLInputElement).value);
+        internalVolume.value = newVolume;
+        await debouncedSetVolume(newVolume);
     });
 
     const onChange = $(async (event: Event) => {

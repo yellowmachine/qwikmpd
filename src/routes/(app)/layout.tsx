@@ -3,14 +3,12 @@ import { type QueueData, subscribe, type MPDEvent, emptyStatus,
 //  getMpdClient 
 } from "~/server/mpd";
 import type { StatusData } from "~/lib/types";
-import {
-  useContextProvider,
-  createContextId,
-} from '@builder.io/qwik';
+import {  useContextProvider,  createContextId } from '@builder.io/qwik';
 import { Menu } from "~/components/menu/Menu";
+import { LogEntry } from "~/components/console/Console";
 
 
-export const storesContext = createContextId<{queue: QueueData, state: StatusData, elapsed: Signal<number>}>('stores');
+export const storesContext = createContextId<{queue: QueueData, state: StatusData, logs: Signal<LogEntry[]>, elapsed: Signal<number>}>('stores');
 
 export default component$(() => {
   
@@ -24,8 +22,10 @@ export default component$(() => {
   const state = useStore<StatusData>(emptyStatus);
   const queue = useStore<QueueData>({queue: [], currentSong: ''});
   const elapsed = useSignal(state.time?.elapsed || 0);
+  const logs = useSignal<LogEntry[]>([]);
+
   
-  useContextProvider(storesContext, {queue, state, elapsed});
+  useContextProvider(storesContext, {queue, state, elapsed, logs});
 
   const connectToStream = $(async () => {
 
@@ -57,6 +57,12 @@ export default component$(() => {
           case 'ready':
             ready.value = value.data;
             break;
+          case 'stdout':
+            logs.value = [...logs.value, value];
+            break
+          case 'stderr':
+            logs.value = [...logs.value, value];
+            break
           case 'queue':
             queue.queue = value.data.queue;
             queue.currentSong = value.data.currentSong;
