@@ -495,9 +495,9 @@ export const updateLog = server$(async function(type: 'stdout' | 'stderr', data:
 })
 
 export const updateAppViaSSHStream = server$(function (){
-    const host = this.env.get('SSH_HOST');
-    const user = this.env.get('SSH_USER');
-    const scriptPath = this.env.get('SCRIPT_UPDATE_APP_PATH');
+    const host = this.env.get('SSH_HOST') || 'raspberry';
+    const user = this.env.get('SSH_USER') || 'miguel';
+    const scriptPath = this.env.get('SCRIPT_UPDATE_APP_PATH') || '/home/miguel/platform/pimpd/update.sh';
 
     if(!scriptPath) {
         throw "No se ha configurado la ruta del script de actualización";
