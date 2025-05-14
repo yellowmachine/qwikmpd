@@ -22,9 +22,16 @@ export function formatSongArray(audios: (AudioFileMetadata | AudioFile)[]) {
 }
 
 export function formatTime(seconds: number | null | undefined | string) {
-    if(typeof seconds === 'string') return seconds;
-    if (!seconds) return '';
-    const min = Math.floor(seconds / 60);
+    if (typeof seconds === 'string') return seconds;
+    if (!seconds && seconds !== 0) return '';
+    const hrs = Math.floor(seconds / 3600);
+    const min = Math.floor((seconds % 3600) / 60);
     const sec = Math.floor(seconds % 60);
-    return `${min}:${sec.toString().padStart(2, '0')}`;
+  
+    if (hrs > 0) {
+      return `${hrs}:${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+    } else {
+      return `${min}:${sec.toString().padStart(2, '0')}`;
+    }
   }
+  

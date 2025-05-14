@@ -158,7 +158,7 @@ async function connectClient(serverUrl: string) {
 
           c.on('system', async (eventName: string) => {
             //console.log('Evento system:', eventName);
-            if (eventName === 'player' || eventName === 'mixer' || eventName === 'playlist') {
+            if (eventName === 'player' || eventName === 'mixer' || eventName === 'playlist' || eventName === 'options') {
               try {
                 const timestamp = markSendIntentBroadcast(['status', 'queue']);
                 const statusData = client?.api.status.get() as unknown as StatusData;
@@ -448,10 +448,16 @@ export const shuffle = server$(async function(){
     await client.api.queue.shuffle();
 })
 
-export const repeat = server$(async function(){
+export const repeat = server$(async function(mode: boolean){
     const client = await getMpdClient(this);
-    await client.api.playback.repeat();
+    await client.api.playback.repeat(mode ? '1' : '');
 })
+
+export const single = server$(async function(mode: boolean){
+  const client = await getMpdClient(this);
+  await client.api.playback.single(mode ? '1' : '');
+})
+
 
 export const stop = server$(async function(){
     const client = await getMpdClient(this);

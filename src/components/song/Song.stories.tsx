@@ -11,6 +11,7 @@ export default meta;
 
 export const ItemEqualsCurrentSong: Story = {
   args: {
+    playThis: () => {},
     song: {
       title: 'Never let me down',
       artist: 'Depeche Mode',
@@ -24,7 +25,7 @@ export const ItemEqualsCurrentSong: Story = {
     }
   },
   render: (props: SongProps) => (
-    <Song song={props.song} currentSong={props.currentSong} pos={0} />
+    <Song {...props} song={props.song} currentSong={props.currentSong} pos={0} />
   )
 };
 
@@ -39,6 +40,6 @@ export const ItemNotEqualsCurrentSong: Story = {
     currentSong: null
   },
   render: (props: SongProps) => (
-    <Song song={props.song} currentSong={props.currentSong} pos={0} />
+    <Song {...props} song={props.song} currentSong={props.currentSong} pos={0} />
   )
 };

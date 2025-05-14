@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "storybook-framework-qwik";
 import { SongList, type SongListProps } from "./SongList";
-import type { Song as TSong } from '~/lib/types';
 
 const meta: Meta<SongListProps> = {
   component: SongList,
@@ -12,6 +11,7 @@ export default meta;
 
 export const List: Story = {
   args: {
+    playThis: () => {},
     songs: [
       {
         title: 'Stairway to Heaven',
@@ -28,7 +28,7 @@ export const List: Story = {
     ]
 
   },
-  render: (props: { songs: TSong[] }) => (
+  render: (props : SongListProps) => (
     <SongList {...props} currentSong={null} />
   )
 };

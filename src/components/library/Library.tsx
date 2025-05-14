@@ -4,12 +4,18 @@ import { SongList } from "../song/SongList";
 import type { Song } from '~/lib/types';
 import PlayHere from "../player/PlayHere";
 import { ActionButton } from "../action-button/action-button";
+import { playUri } from "#mpd";
 
 
 const loadPath = async function(path: string){
     const result = await list(path);
     return {file: result.files, directory: result.directories};
 }
+
+const playThis = $(async function ({uri}: {pos: number, uri: string | undefined}){
+    if(uri)
+        await playUri(uri);
+})
 
 export interface LibraryProps {
     initialData: {file: Song[], directory: string[]}
@@ -28,15 +34,23 @@ export const Library = component$(({initialData}: LibraryProps) => {
         history.value = [...history.value, path];
     })
 
-    const goBack$ = $(async () => {
-        history.value.pop();
+    const loadAndRefresh$ = $(async () => {
         const result = await loadPath(history.value[history.value.length - 1]);
         files.value = result.file;
         directories.value = result.directory;
     })
 
+    const goBack$ = $(async () => {
+        history.value.pop();
+        await loadAndRefresh$();
+        //const result = await loadPath(history.value[history.value.length - 1]);
+        //files.value = result.file;
+        //directories.value = result.directory;
+    })
+
     const updateLibrary = $(async () => {
         await update();
+        await loadAndRefresh$();
     })
 
     return (
@@ -53,7 +67,7 @@ export const Library = component$(({initialData}: LibraryProps) => {
             <h1 class="text-3xl text-brand-300 mb-4">
                 <span>Library</span>
                 <ActionButton action={$(() => updateLibrary())} successMessage="ok">
-                    <div class="mb-2 cursor-pointer bg-red-200 hover:bg-brand-300 p-2 text-white text-xl float float-right">
+                    <div class="mb-2 cursor-pointer bg-brand-300 hover:bg-brand-300 p-2 rounded text-brand-500 text-xl ml-2">
                         Actualizar base de datos
                     </div>
                 </ActionButton>
@@ -64,7 +78,7 @@ export const Library = component$(({initialData}: LibraryProps) => {
                 </div>
                 
             ))}
-            <SongList songs={files.value} currentSong={null} />
+            <SongList playThis={playThis} songs={files.value} currentSong={null} />
         </>
     );
 })
