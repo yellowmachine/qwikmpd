@@ -13,6 +13,7 @@ export interface PlayerProps {
     volume: number;
     state: 'play' | 'stop' | 'pause';
     repeat: boolean;
+    single: boolean;
 }
 
 export const Player = component$(( props: PlayerProps ) => {
@@ -51,6 +52,7 @@ export const Player = component$(( props: PlayerProps ) => {
         <div class="flex flex-col items-center">
             <div class="flex items-center gap-2 border-2 rounded-md p-4 bg-white text-orange-500 mb-4">
                 {props.repeat && <div class="text-xl text-brand-500">r</div>}
+                {props.single && <div class="text-xl text-brand-500">s</div>}
                 <PlayerButton onClick$={() => onPrev()}>
                     <LuArrowLeft class="w-8 h-8" />
                 </PlayerButton>
@@ -85,7 +87,7 @@ export const Player = component$(( props: PlayerProps ) => {
                     <div class="relative">
                         <LuMenu class="w-8 h-8" />
                         {showMenu.value && 
-                            <PopupMenu repeat={props.repeat} />
+                            <PopupMenu single={props.single} repeat={props.repeat} />
                         }
                     </div>
                 </PlayerButton>
