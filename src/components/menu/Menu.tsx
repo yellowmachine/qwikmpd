@@ -10,7 +10,6 @@ export const Menu = component$(() => {
     { href: '/library', label: 'Biblioteca' },
     { href: '/playlists', label: 'Playlists' },
     { href: '/clients', label: 'Clientes' },
-    { href: '/update', label: 'Update' },
   ];
 
   return (
@@ -29,7 +28,7 @@ export const Menu = component$(() => {
           </li>
         ))}
         <li>
-          <Link href="/admin" class="text-brand-500">
+          <Link href="/update" class="text-brand-500">
             <LuSettings class="w-8 h-8" />
           </Link>
         </li>

@@ -58,7 +58,7 @@ export default component$(({ volume, clientId }: VolumeBarProps) => {
                 max="100"
                 step="1"
                 value={internalVolume.value}
-                class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer dark:bg-blue-500"
+                class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
                 onInput$={onInput}
                 onChange$={onChange}
             />

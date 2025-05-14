@@ -32,8 +32,8 @@ export default component$(() => {
           <div class="flex justify-center">
             <IsPlaying isPlaying={state.state === 'play'} />
           </div>
-          <div class="flex justify-center">
-            <Player state={state.state} total={totalCurrentSong()} volume={state.volume} />
+          <div class="flex justify-center sticky top-0 bg-brand-50 z-10">
+            <Player repeat={state.repeat} state={state.state} total={totalCurrentSong()} volume={state.volume} />
           </div>
           <SongList 
             songs={queue.queue} 

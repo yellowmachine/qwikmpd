@@ -33,17 +33,17 @@ export const Song = component$<SongProps>(( {song, currentSong, pos} ) => {
             { song.uri &&song.uri === currentSong?.uri ?  
                 <div class="col-span-full bg-yellow-100 p-4">
                     <div class="flex items-center gap-2">
-                    <span class="text-blue-600 font-bold animate-pulse">●</span>
+                    <span class="text-brand-600 font-bold animate-pulse">●</span>
                     <span class={`font-medium text-lg text-orange-600`}>{song.title || song.name}</span>
-                    <span class="text-xs text-blue-400 ml-2">({song.artist})</span>
-                    <span class="text-blue-500">
+                    <span class="text-xs text-brand-400 ml-2">({song.artist})</span>
+                    <span class="text-brand-500">
                         {formatTime(currentSong.elapsed)} / {formatTime(currentSong.total)}
                     </span>
                     </div>
                     
-                    <div class="h-2 mt-2 bg-blue-100 rounded">
+                    <div class="h-2 mt-2 bg-brand-100 rounded">
                         <div
-                            class="h-2 bg-blue-500 rounded transition-all"
+                            class="h-2 bg-brand-500 rounded transition-all"
                             style={{
                                 width: currentSong.total
                                 ? `${Math.min(100, ((currentSong.elapsed || 0) / currentSong.total) * 100)}%`
@@ -67,7 +67,7 @@ export const Song = component$<SongProps>(( {song, currentSong, pos} ) => {
 
                     <div
                         class={`cursor-pointer gap-2 p-3 rounded transition-all bg-white hover:bg-brand-100
-                                dark:bg-gray-800 border border-brand-300 dark:hover:bg-gray-700
+                                border border-brand-300
                                 ${state.clicked ? 'flash-bg' : ''}`}
                     >
                         <button

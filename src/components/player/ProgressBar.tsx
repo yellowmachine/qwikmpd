@@ -34,12 +34,12 @@ export default component$(( {total, elapsed} : ProgressBarProps) => {
                     max={total}
                     step="1"
                     value={elapsed.value ?? 0}
-                    class="w-full h-2 bg-orange-200 rounded-lg appearance-none cursor-pointer dark:bg-orange-500"
+                    class="w-full h-2 bg-brand-200 accent-orange-500 rounded-lg appearance-none cursor-pointer"
                     onInput$={onInput}
                     onChange$={onChange}
                 />
 
-                <div class="flex justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <div class="flex justify-between mt-1 text-xs text-gray-500">
                     <span>{formatTime(elapsed.value)} / {formatTime(total)}</span>
                     {total && 
                         <span>{formatTime(total - (elapsed.value ?? 0))}</span>

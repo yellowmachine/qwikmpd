@@ -2,10 +2,14 @@ import { $, component$ } from "@builder.io/qwik";
 import { ActionButton } from "../action-button/action-button";
 import { shuffle, repeat } from '~/server/mpd';
 
+export interface PopupMenuProps {
+    repeat: boolean;
+}
 
-export const PopupMenu = component$(() => {
+
+export const PopupMenu = component$((props: PopupMenuProps) => {
     const onRepeat = $(async () => {
-        await repeat();
+        await repeat(!props.repeat);
     })
 
     const onShuffle = $(async () => {
