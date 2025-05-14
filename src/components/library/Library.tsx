@@ -4,12 +4,18 @@ import { SongList } from "../song/SongList";
 import type { Song } from '~/lib/types';
 import PlayHere from "../player/PlayHere";
 import { ActionButton } from "../action-button/action-button";
+import { playUri } from "#mpd";
 
 
 const loadPath = async function(path: string){
     const result = await list(path);
     return {file: result.files, directory: result.directories};
 }
+
+const playThis = $(async function ({uri}: {pos: number, uri: string | undefined}){
+    if(uri)
+        await playUri(uri);
+})
 
 export interface LibraryProps {
     initialData: {file: Song[], directory: string[]}
@@ -72,7 +78,7 @@ export const Library = component$(({initialData}: LibraryProps) => {
                 </div>
                 
             ))}
-            <SongList songs={files.value} currentSong={null} />
+            <SongList playThis={playThis} songs={files.value} currentSong={null} />
         </>
     );
 })

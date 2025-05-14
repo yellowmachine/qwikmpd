@@ -1,12 +1,13 @@
-import { $, component$, useSignal, useStore,  } from '@builder.io/qwik';
+import { $, component$, type QRL, useSignal, useStore,  } from '@builder.io/qwik';
 import { formatTime } from '~/lib/song';
 import type { Song as TSong } from '~/lib/types';
 import { SongPopUp } from './SongPopup';
-import { playThis } from '~/server/mpd';
+
 
 export interface SongProps {
   pos: number;
   song: TSong;
+  playThis: QRL<({pos, uri}: {pos: number, uri: string | undefined}) => Promise<void>>;
   currentSong: {
     uri: string;
     elapsed: number;
@@ -14,23 +15,25 @@ export interface SongProps {
   } | null;
 }
 
-export const Song = component$<SongProps>(( {song, currentSong, pos} ) => {
+export const Song = component$<SongProps>(( {song, currentSong, pos, playThis} ) => {
 
     const show = useSignal(false);
     const state = useStore({ clicked: false });
 
 
     const playThisSong = $(async () => {
-        state.clicked = true;
-        await playThis(pos);
-        setTimeout(() => {
-            state.clicked = false;
-        }, 500);
+        await playThis({pos, uri: song.uri});
+        
+        //state.clicked = true;
+        //await playThis(pos);
+        //setTimeout(() => {
+        //    state.clicked = false;
+        //}, 500);
     })
 
     return (
         <>
-            { song.uri &&song.uri === currentSong?.uri ?  
+            { song.uri && song.uri === currentSong?.uri ?  
                 <div class="col-span-full bg-yellow-100 p-4">
                     <div class="flex items-center gap-2">
                     <span class="text-brand-600 font-bold animate-pulse">●</span>
