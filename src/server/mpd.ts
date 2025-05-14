@@ -455,7 +455,7 @@ export const repeat = server$(async function(mode: boolean){
 
 export const single = server$(async function(mode: boolean){
   const client = await getMpdClient(this);
-  await client.api.playback.single(mode ? '1' : '');
+  await client.api.playback.single(mode ? '1' : '0');
 })
 
 
