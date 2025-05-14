@@ -14,7 +14,7 @@ export interface ConsoleProps {
 export const Console = component$((props: ConsoleProps) => {
   const containerRef = useSignal<HTMLDivElement>();
   
-  // Auto-scroll al fondo cuando llegan logs nuevos
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => props.logs.length);
     if (containerRef.value) {

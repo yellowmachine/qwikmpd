@@ -5,7 +5,7 @@ import { type QueueData, subscribe, type MPDEvent, emptyStatus,
 import type { StatusData } from "~/lib/types";
 import {  useContextProvider,  createContextId } from '@builder.io/qwik';
 import { Menu } from "~/components/menu/Menu";
-import { LogEntry } from "~/components/console/Console";
+import { type LogEntry } from "~/components/console/Console";
 
 
 export const storesContext = createContextId<{queue: QueueData, state: StatusData, logs: Signal<LogEntry[]>, elapsed: Signal<number>}>('stores');
