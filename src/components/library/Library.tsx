@@ -5,6 +5,7 @@ import type { Song } from '~/lib/types';
 import PlayHere from "../player/PlayHere";
 import { ActionButton } from "../action-button/action-button";
 import { playUri } from "#mpd";
+import { LuFolder } from "@qwikest/icons/lucide";
 
 
 const loadPath = async function(path: string){
@@ -78,8 +79,8 @@ export const Library = component$(({initialData}: LibraryProps) => {
                 </div>
             }
             {directories.value.map((dir) => (
-                <div key={dir} class="mb-2 cursor-pointer bg-brand-200 hover:bg-brand-300 p-2 text-white text-xl">
-                    <button class="cursor-pointer" onClick$={() => goPath$(dir)}>{dir}</button>
+                <div key={dir} class="mb-2 cursor-pointer bg-brand-300 hover:bg-brand-300 p-2 text-white text-xl">
+                    <button class="cursor-pointer w-full" onClick$={() => goPath$(dir)}><LuFolder />{dir}</button>
                 </div>
                 
             ))}

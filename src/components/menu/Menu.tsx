@@ -1,6 +1,6 @@
 import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import { Link, useLocation } from '@builder.io/qwik-city';
-import { LuMenu, LuSettings } from '@qwikest/icons/lucide';
+import { LuMenu, LuSettings, LuLibraryBig, LuListMusic, LuVolume2 } from '@qwikest/icons/lucide';
 
 const MenuLinks = ({ location, menuItems }: { location: any, menuItems: any[]}) => (
   <>
@@ -36,11 +36,8 @@ export const Menu = component$(() => {
   });
 
   const menuItems = [
-    { href: '/queue', label: 'Reproductor' },
-    { href: '/library', label: 'Biblioteca' },
     { href: '/playlists', label: 'Playlists' },
-    { href: '/clients', label: 'Altavoces' },
-  ];
+  ]
 
   return (
     <nav class="mb-4 mt-4 border border-brand-300 border-2 flex justify-between items-center px-4">
@@ -48,6 +45,15 @@ export const Menu = component$(() => {
       <div class="font-bold text-xl text-brand-500">westernMPD</div>
       {/* Menú a la derecha */}
       <div class="flex items-center">
+        <Link href="/queue" class="text-brand-500 p-2">
+          <LuListMusic class="w-8 h-8" />
+        </Link>
+        <Link href="/library" class="text-brand-500 p-2">
+          <LuLibraryBig class="w-8 h-8" />
+        </Link>
+        <Link href="/clients" class="text-brand-500 p-2">
+          <LuVolume2 class="w-8 h-8" />
+        </Link>
         <ul class="hidden md:flex gap-4 list-none p-0">
           <MenuLinks location={location} menuItems={menuItems} />
         </ul>
