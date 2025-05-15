@@ -70,13 +70,7 @@ export default component$(() => {
     return (
       <>
         <div>
-          <div class="flex flex-col md:flex-row md:items-start sticky top-0 bg-brand-50 z-10">
-            {/* Columna izquierda: IsPlaying y Player */}
-            <div class="flex-1">
-              {/*<div class="flex justify-center position-relative z-1">
-                <IsPlaying isPlaying={state.state === 'play'} />
-              </div>
-              */}
+          <div class="flex-1 sticky top-0 bg-brand-50 z-10">
               <div class="flex justify-center ">
                 <Player
                   single={state.single}
@@ -87,22 +81,20 @@ export default component$(() => {
                 />
               </div>
             </div>
-            {/* Columna derecha: Cover, solo visible si showCover y coverUrl */}
             {showCover.value && coverUrl.value && (
               <div
                 onClick$={() => (showCover.value = false)}
-                class="flex justify-center md:justify-end md:ml-4 position-relative z-1 cursor-pointer"
+                class="flex justify-center md:justify-center md:ml-4 position-relative z-1 cursor-pointer"
               >
                 <img
                   src={coverUrl.value}
                   alt="Album cover"
                   width="400"
                   height="400"
-                  class="w-1/3 md:w-64"
+                  class="p-2 md"
                 />
               </div>
             )}
-          </div>
           <SongList
             playThis={playThis}
             songs={queue.queue}
