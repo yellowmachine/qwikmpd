@@ -89,6 +89,7 @@ export type StatusData = {
     duration: number;
     pos: number;
     id: number;
+    album: string;
   }
 
   export type Song = {
@@ -96,6 +97,7 @@ export type StatusData = {
     name: string;
     title: string;
     uri?: string;
+    album?: string;
     time: string | number;
 };
 

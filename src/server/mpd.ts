@@ -256,10 +256,7 @@ async function getQueueMsg(client?: MPDApi.ClientAPI) {
   return {queue: formatSongArray(list), currentSong: current?.file || ''};
 }
 
-async function broadcast(msg: MPDEvent, timestampt: number){ //deberia ser async
-  //for(const q of Object.values(subscriptors)){
-  //    await q.push(msg);
-  //}
+async function broadcast(msg: MPDEvent, timestampt: number){
   for(const [id, queue] of Object.entries(subscriptors)){
     await send(Number(id), msg, timestampt);
   }
