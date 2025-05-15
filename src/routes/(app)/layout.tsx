@@ -6,6 +6,7 @@ import type { StatusData } from "~/lib/types";
 import {  useContextProvider,  createContextId } from '@builder.io/qwik';
 import { Menu } from "~/components/menu/Menu";
 import { type LogEntry } from "~/components/console/Console";
+import { Footer } from "~/components/footer/Footer";
 
 
 export const storesContext = createContextId<{queue: QueueData, state: StatusData, logs: Signal<LogEntry[]>, elapsed: Signal<number>}>('stores');
@@ -142,12 +143,15 @@ export default component$(() => {
   });
 
   return (
-    <div class="bg-brand-50">
+    <div class="bg-brand-50 min-h-screen flex flex-col">
       <div class="text-red-500">
         {warning.value}
       </div>
       <Menu />
-      <Slot />
+      <main class="flex-1">
+        <Slot />
+      </main>
+      <Footer />
     </div>
   );
 });
