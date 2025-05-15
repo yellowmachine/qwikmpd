@@ -29,7 +29,7 @@ export const IsPlaying = component$((props: IsPlayingProps) => {
         <>{state.visible &&
             <>
                 <h1
-                    class={`text-6xl font-extrabold leading-[1.2] text-transparent bg-clip-text
+                    class={`text-2xl font-extrabold leading-[1.2] text-transparent bg-clip-text
                             bg-gradient-to-r from-purple-400 via-pink-500 to-yellow-400
                             animate-gradient mb-4 transition-opacity duration-700`}
                     style={{

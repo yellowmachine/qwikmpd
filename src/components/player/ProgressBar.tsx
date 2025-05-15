@@ -39,7 +39,7 @@ export default component$(( {total, elapsed} : ProgressBarProps) => {
                     onChange$={onChange}
                 />
 
-                <div class="flex justify-between mt-1 text-xs text-gray-500">
+                <div class="flex justify-between mt-1 text-xs text-brand-500">
                     <span>{formatTime(elapsed.value)} / {formatTime(total)}</span>
                     {total && 
                         <span>{formatTime(total - (elapsed.value ?? 0))}</span>

@@ -68,26 +68,49 @@ export default component$(() => {
     return (
       <>
         <div>
-          <div class="flex justify-center position-relative z-1">
-            <IsPlaying isPlaying={state.state === 'play'} />
-          </div>
-          <div class="flex justify-center sticky top-0 bg-brand-50 z-10">
-            <Player single={state.single} repeat={state.repeat} state={state.state} total={totalCurrentSong()} volume={state.volume} />
-          </div>
-          { showCover.value && coverUrl.value && (
-            <div onClick$={() => showCover.value = false} class="flex justify-center position-relative z-1 cursor-pointer">
-              <img src={coverUrl.value} alt="Album cover" 
-              width="400"
-              height="400"
-              class="w-1/3" />
+          <div class="flex flex-col md:flex-row md:items-start">
+            {/* Columna izquierda: IsPlaying y Player */}
+            <div class="flex-1 sticky top-0 bg-brand-50 z-10">
+              <div class="flex justify-center position-relative z-1">
+                <IsPlaying isPlaying={state.state === 'play'} />
+              </div>
+              <div class="flex justify-center ">
+                <Player
+                  single={state.single}
+                  repeat={state.repeat}
+                  state={state.state}
+                  total={totalCurrentSong()}
+                  volume={state.volume}
+                />
+              </div>
             </div>
-          )}
-          <SongList playThis={playThis}
-            songs={queue.queue} 
-            currentSong={ { uri: queue.currentSong, elapsed: elapsed.value, total: totalCurrentSong()} } />
+            {/* Columna derecha: Cover, solo visible si showCover y coverUrl */}
+            {showCover.value && coverUrl.value && (
+              <div
+                onClick$={() => (showCover.value = false)}
+                class="flex justify-center md:justify-end md:ml-4 position-relative z-1 cursor-pointer"
+              >
+                <img
+                  src={coverUrl.value}
+                  alt="Album cover"
+                  width="400"
+                  height="400"
+                  class="w-1/3 md:w-64"
+                />
+              </div>
+            )}
+          </div>
+          <SongList
+            playThis={playThis}
+            songs={queue.queue}
+            currentSong={{
+              uri: queue.currentSong,
+              elapsed: elapsed.value,
+              total: totalCurrentSong(),
+            }}
+          />
         </div>
       </>
-      
     );
   }
 );
