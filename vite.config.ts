@@ -8,6 +8,9 @@ import { qwikCity } from "@builder.io/qwik-city/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import pkg from "./package.json";
 import tailwindcss from "@tailwindcss/vite";
+import { qwikPwa } from "@qwikdev/pwa";
+
+
 type PkgDep = Record<string, string>;
 const { dependencies = {}, devDependencies = {} } = pkg as any as {
   dependencies: PkgDep;
@@ -21,7 +24,11 @@ errorOnDuplicatesPkgDeps(devDependencies, dependencies);
 
 export default defineConfig(({ command, mode }): UserConfig => {
   return {
-    plugins: [qwikCity(), qwikVite(), tsconfigPaths(), tailwindcss()],
+    plugins: [qwikCity(), qwikVite(), 
+      qwikPwa({
+        /* options */
+      }),
+      tsconfigPaths(), tailwindcss()],
     test: {
       include: [
         'src/components/**/*.{test,spec}.{ts,tsx}',
