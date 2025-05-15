@@ -36,10 +36,10 @@ export const Menu = component$(() => {
   });
 
   const menuItems = [
-    { href: '/queue', label: 'Cola' },
+    { href: '/queue', label: 'Reproductor' },
     { href: '/library', label: 'Biblioteca' },
     { href: '/playlists', label: 'Playlists' },
-    { href: '/clients', label: 'Clientes' },
+    { href: '/clients', label: 'Altavoces' },
   ];
 
   return (

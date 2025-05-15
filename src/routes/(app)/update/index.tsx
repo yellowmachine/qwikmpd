@@ -13,7 +13,9 @@ export default component$(() => {
 
     return <>
         <button onClick$={update} disabled={updating.value}
-            class="px-4 py-2 bg-brand-600 text-white rounded cursor-pointer">Actualizar app (dura varios minutos)</button>
+            class="px-4 py-2 bg-brand-600 text-white rounded cursor-pointer mb-2">
+                Actualizar app (dura varios minutos)
+        </button>
         <Console logs={logs.value} />
     </>
 });

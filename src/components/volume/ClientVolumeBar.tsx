@@ -62,7 +62,7 @@ export default component$(({ volume, clientId }: VolumeBarProps) => {
                 onInput$={onInput}
                 onChange$={onChange}
             />
-            <span class="text-xs w-8 text-right">{internalVolume.value}%</span>
+            <span class="text-sm w-8 text-right text-brand-500">{internalVolume.value}%</span>
         </div>
     );
 });

@@ -1,6 +1,6 @@
 import type { AudioFile, AudioFileMetadata, Song } from "./types";
 
-export function formatSong(line: string) {
+function formatSong(line: string) {
     const [artist, title, id, uri, time] = line.trim().split('\\').map(c => c.trim());
     return { artist: artist || '', title: title || uri || '', id: parseInt(id), uri: uri || '', time: time || '' };
 }
@@ -16,7 +16,8 @@ export function formatSongArray(audios: (AudioFileMetadata | AudioFile)[]) {
             title: audio.title || stripFolder(audio.file),
             uri: audio.file,
             time: audio.time,
-            name: audio.name
+            name: audio.name,
+            album: audio.album
         }
     )) as Song[]
 }

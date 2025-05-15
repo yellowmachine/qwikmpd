@@ -130,6 +130,9 @@ export default component$(() => {
 
     const interval = setInterval(() => {
       elapsed.value++;
+      if(state.time?.total !== undefined && elapsed.value >= state.time.total) {
+        elapsed.value = 0
+      }
     }, 1000);
 
     cleanup(() => {

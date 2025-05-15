@@ -55,23 +55,28 @@ export const Library = component$(({initialData}: LibraryProps) => {
 
     return (
         <>
-            {files.value.length > 0 && 
-                <PlayHere path={history.value[history.value.length - 1]} />
-            }
+            <div class="flex items-center justify-between mb-4">
+                {/* PlayHere centrado verticalmente y al final */}
+                <div class="flex-1 flex justify-end">
+                    {files.value.length > 0 && 
+                    <PlayHere path={history.value[history.value.length - 1]} />
+                    }
+                </div>
+                {/* Botón Actualizar base de datos */}
+                <h1 class="text-3xl text-brand-300">
+                    <ActionButton action={$(() => updateLibrary())} successMessage="ok">
+                    <div class="mb-2 cursor-pointer bg-brand-300 hover:bg-brand-300 p-2 rounded text-brand-500 text-xl ml-2">
+                        Actualizar base de datos
+                    </div>
+                    </ActionButton>
+                </h1>
+            </div>
             {history.value.length > 1 && 
                 <div class="p-2">
                     <button class="mb-2 p-2 cursor-pointer bg-brand-200 hover:bg-brand-300 text-white" onClick$={goBack$} >[..]</button>
                     <span class="mb-2 p-2 text-brand-500 text-xl">{history.value.join('/')}</span>
                 </div>
             }
-            <h1 class="text-3xl text-brand-300 mb-4">
-                <span>Library</span>
-                <ActionButton action={$(() => updateLibrary())} successMessage="ok">
-                    <div class="mb-2 cursor-pointer bg-brand-300 hover:bg-brand-300 p-2 rounded text-brand-500 text-xl ml-2">
-                        Actualizar base de datos
-                    </div>
-                </ActionButton>
-            </h1>
             {directories.value.map((dir) => (
                 <div key={dir} class="mb-2 cursor-pointer bg-brand-200 hover:bg-brand-300 p-2 text-white text-xl">
                     <button class="cursor-pointer" onClick$={() => goPath$(dir)}>{dir}</button>
