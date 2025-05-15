@@ -41,13 +41,13 @@ export const ActionButton = component$<ActionButtonProps>(({ action, successMess
       </span>
 
       {state.success && (
-        <div class="absolute left-full top-1/2 -translate-y-1/2 ml-4 min-w-[100px] px-4 py-2 rounded shadow-lg text-sm font-medium bg-green-100 text-green-800 border border-green-300">
+        <div class="absolute top-full top-1/2 -translate-y-1/2 ml-4 min-w-[100px] px-4 py-2 rounded shadow-lg text-sm font-medium bg-green-100 text-green-800 border border-green-300">
           {successMessage}
         </div>
       )}
 
       {state.error && (
-        <div class="absolute left-full top-1/2 -translate-y-1/2 ml-4 min-w-[100px] px-4 py-2 rounded shadow-lg text-sm font-medium bg-red-100 text-red-800 border border-red-300">
+        <div class="absolute top-full top-1/2 -translate-y-1/2 ml-4 min-w-[100px] px-4 py-2 rounded shadow-lg text-sm font-medium bg-red-100 text-red-800 border border-red-300">
           {state.error}
         </div>
       )}
