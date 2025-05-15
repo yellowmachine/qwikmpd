@@ -10,7 +10,7 @@ export interface VolumeProps {
 export const Volume = component$(( {volume} : VolumeProps) => {
 
     return <>
-        <span class="text-brand-500 text-xl">{volume}</span>
+        <span class="text-xl">{volume}</span>
         {/*<VolumeBar onVolumeChange$={onVolumeChange$} volume={volume} />*/}
     </>
 });

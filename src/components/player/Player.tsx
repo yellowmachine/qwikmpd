@@ -49,8 +49,20 @@ export const Player = component$(( props: PlayerProps ) => {
     })
 
     return (
-        <div class="flex flex-col items-center">
-            <div class="flex items-center gap-2 border-2 rounded-md p-4 bg-white text-orange-500 mb-4">
+        <>
+        <style>{`
+            @keyframes gradient-x {
+              0%, 100% { background-position: 0% 50%; }
+              50% { background-position: 100% 50%; }
+            }
+            .animate-gradient-bg {
+              background: linear-gradient(90deg, #a78bfa, #f472b6, #facc15);
+              background-size: 200% 200%;
+              animation: gradient-x 3s ease-in-out infinite;
+            }
+          `}</style>
+        <div class={`flex flex-col items-center`}>
+            <div class={`flex items-center gap-2 border-2 rounded-md p-4 mb-4 ${props.state === 'play' ? 'animate-gradient-bg text-orange-100' : 'text-orange-500'}`}>
                 {props.repeat && <div class="text-xl text-brand-500">r</div>}
                 {props.single && <div class="text-xl text-brand-500">s</div>}
                 <PlayerButton onClick$={() => onPrev()}>
@@ -95,6 +107,7 @@ export const Player = component$(( props: PlayerProps ) => {
             </div>
             <ProgressBar total={props.total} elapsed={elapsed} />
         </div>
+        </>
     );
 });
 
