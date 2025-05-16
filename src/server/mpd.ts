@@ -531,8 +531,8 @@ export const executeSSHCommand = server$(function (command: 'shutdown' | 'reboot
 });
 
 // Funciones específicas
-export const shutdown$ = server$(() => executeSSHCommand('shutdown'));
-export const reboot$ = server$(() => executeSSHCommand('reboot'));
+export const shutdown = server$(() => executeSSHCommand('shutdown'));
+export const reboot = server$(() => executeSSHCommand('reboot'));
 
 // esta funcion hay que integrarla en executeSSHCommand
 export const updateAppViaSSHStream = server$(function (){
