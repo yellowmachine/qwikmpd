@@ -1,7 +1,7 @@
 import { $, component$, useContext, useSignal } from '@builder.io/qwik';
 import { Console } from '~/components/console/Console';
 import { storesContext } from '~/routes/(app)/layout';
-import { updateAppViaSSHStream, shutdown$, reboot$ } from '~/server/mpd';
+import { updateAppViaSSHStream, shutdown, reboot } from '~/server/mpd';
 
 export default component$(() => {
     const { logs } = useContext(storesContext);
@@ -11,6 +11,14 @@ export default component$(() => {
     const update = $(async () => {
         await updateAppViaSSHStream();
     });
+
+    const onReboot = $(async () => {
+        await reboot();
+    });
+
+    const onShutdown = $(async () => {
+        await shutdown();
+    })
 
     return <>
         <button onClick$={update} disabled={updating.value}
@@ -37,14 +45,14 @@ export default component$(() => {
           <button
             class="bg-red-600 text-white px-4 py-2 rounded disabled:opacity-50"
             disabled={!dangerEnabled.value}
-            onClick$={() => shutdown$()}
+            onClick$={onShutdown}
           >
             Apagar
           </button>
           <button
             class="bg-red-600 text-white px-4 py-2 rounded disabled:opacity-50"
             disabled={!dangerEnabled.value}
-            onClick$={() => reboot$()}
+            onClick$={onReboot}
           >
             Reiniciar
           </button>
