@@ -497,6 +497,44 @@ export const updateLog = server$(async function(type: 'stdout' | 'stderr', data:
   await broadcast({ type, data }, timestamp);
 })
 
+export const executeSSHCommand = server$(function (command: 'shutdown' | 'reboot') {
+  const host = this.env.get('SSH_HOST') || 'raspberry.casa';
+  const user = this.env.get('SSH_USER') || 'miguel';
+  
+  const commands = {
+    shutdown: 'sudo shutdown -h now',
+    reboot: 'sudo reboot'
+  };
+
+  const ssh = spawn("ssh", [
+    // "-i", sshKeyPath,
+    `${user}@${host}`,
+    commands[command]
+  ]);
+
+  ssh.stdout.on("data", (data) => {
+    updateLog("stdout", `[${command.toUpperCase()}] ${data.toString()}`);
+  });
+
+  ssh.stderr.on("data", (data) => {
+    updateLog("stderr", `[${command.toUpperCase()}] ${data.toString()}`);
+  });
+
+  ssh.on("close", (code) => {
+    updateLog("stdout", `[${command.toUpperCase()}] Proceso finalizado con código ${code}\n`);
+  });
+
+  ssh.on('error', (err) => {
+    console.error(`Error en ${command}:`, err);
+    updateLog("stderr", `[${command.toUpperCase()}] Error: ${err.message}`);
+  });
+});
+
+// Funciones específicas
+export const shutdown$ = server$(() => executeSSHCommand('shutdown'));
+export const reboot$ = server$(() => executeSSHCommand('reboot'));
+
+// esta funcion hay que integrarla en executeSSHCommand
 export const updateAppViaSSHStream = server$(function (){
     const host = this.env.get('SSH_HOST') || 'raspberry';
     const user = this.env.get('SSH_USER') || 'miguel';
