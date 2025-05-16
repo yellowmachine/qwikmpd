@@ -15,7 +15,15 @@ export const Primary: Story = {
   },
   render: () => {
     return (
-        <Library  initialData={
+        <Library  
+          currentSong={
+            {
+                uri: 'led-zeppelin/stairway-to-heaven',
+                elapsed: 0,
+                total: 0
+            }
+          }
+          initialData={
             {
                 file: [
                     {
