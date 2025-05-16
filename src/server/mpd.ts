@@ -609,7 +609,7 @@ async function writeM3UAsync(playlistName: string, m3uContent: string) {
   await fs.writeFile(playlistName, m3uContent, 'utf8');
 }
 
-export const generateTmpStream = server$(async function (videoUrl: string, playlistName = 'tmp.m3u') {
+export const generateTmpStream = server$(async function (videoUrl: string) {
   
   try {
     const { stdout } = await execCommand(`yt-dlp -f bestaudio -g "${videoUrl}"`);
@@ -625,7 +625,7 @@ ${streamUrl}
       await writeM3UAsync(path.join('./playlists', playlistName), m3uContent);
     else
       await writeM3UAsync(path.join('/app/playlists', playlistName), m3uContent);
-    await loadPlaylist(playlistName);
+    await loadPlaylist(playlistName.replace(/\.m3u$/, ''));
     await play();
   } catch (error) {
     console.error('Error generando la playlist:', error);
