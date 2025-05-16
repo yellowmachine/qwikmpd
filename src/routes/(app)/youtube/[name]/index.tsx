@@ -1,6 +1,5 @@
 import { component$ } from '@builder.io/qwik';
-import { server$ } from '@builder.io/qwik-city';
-import { generateTmpStream, getChannelVideos } from '~/server/mpd';
+import { getChannelVideos, generateM3U } from '~/server/mpd';
 import { routeLoader$ } from '@builder.io/qwik-city';
 
 export const useVideos = routeLoader$(async (event) => {
@@ -9,12 +8,6 @@ export const useVideos = routeLoader$(async (event) => {
   if(!channelId)
     return []
   return await getChannelVideos(channelId);
-});
-
-
-const generateM3UServer$ = server$(async (videoId: string) => {
-  const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-  await generateTmpStream(videoUrl);
 });
 
 
@@ -52,7 +45,7 @@ export default component$(() => {
                    rel="noopener noreferrer">
                       Watch on YouTube
                 </a>
-                <button class="bg-brand-600 text-white px-6 py-2 rounded mt-4" onClick$={() => generateM3UServer$(video.videoId)}>Stream here!</button>
+                <button class="bg-brand-600 text-white px-6 py-2 rounded mt-4" onClick$={() => generateM3U(video.videoId)}>Stream here!</button>
               </div>
             ))}
           </div>
