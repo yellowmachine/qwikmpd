@@ -508,12 +508,11 @@ export const downloadYoutubeAudio = server$(function (
   url: string,
   outputDir: string
 ) {
-  // Construye los argumentos para yt-dlp
   const args = [
-    '-x',                // Extrae el audio
+    '-x',           
     '--audio-format', 'flac', 
-    '-P', outputDir, // Directorio de destino
-    url,             // URL de YouTube
+    '-P', path.join('./music', outputDir), 
+    url,         
   ];
 
   const ytdlp = spawn('yt-dlp', args);
