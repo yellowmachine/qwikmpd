@@ -20,10 +20,15 @@ const playThis = $(async function ({uri}: {pos: number, uri: string | undefined}
 })
 
 export interface LibraryProps {
-    initialData: {file: Song[], directory: string[]}
+    initialData: {file: Song[], directory: string[]},
+    currentSong: {
+        uri: string;
+        elapsed: number;
+        total: number;
+    }
 }
 
-export const Library = component$(({initialData}: LibraryProps) => {
+export const Library = component$(({initialData, currentSong}: LibraryProps) => {
 
     const history = useSignal<string[]>(['']);
     const files = useSignal<Song[]>(initialData.file);
@@ -179,7 +184,7 @@ export const Library = component$(({initialData}: LibraryProps) => {
                 </div>
                 
             ))}
-            <SongList playThis={playThis} songs={files.value} currentSong={null} />
+            <SongList playThis={playThis} songs={files.value} currentSong={currentSong} />
         </>
     );
 })
