@@ -1,6 +1,6 @@
 import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import { Link, useLocation } from '@builder.io/qwik-city';
-import { LuMenu, LuSettings, LuLibraryBig, LuListMusic, LuVolume2 } from '@qwikest/icons/lucide';
+import { LuMenu, LuSettings, LuLibraryBig, LuListMusic, LuVolume2, LuRadioTower } from '@qwikest/icons/lucide';
 
 const MenuLinks = ({ location, menuItems }: { location: any, menuItems: any[]}) => (
   <>
@@ -35,8 +35,8 @@ export const Menu = component$(() => {
     showPopup.value = false;
   });
 
-  const menuItems = [
-    { href: '/playlists', label: 'Playlists' },
+  const menuItems: {href: string, label: string}[] = [
+    //{ href: '/playlists', label: 'Playlists' },
   ]
 
   return (
@@ -53,6 +53,9 @@ export const Menu = component$(() => {
         </Link>
         <Link href="/clients" class="text-brand-500 p-2">
           <LuVolume2 class="w-8 h-8" />
+        </Link>
+        <Link href="/playlists" class="text-brand-500 p-2">
+          <LuRadioTower class="w-8 h-8" />
         </Link>
         <ul class="hidden md:flex gap-4 list-none p-0">
           <MenuLinks location={location} menuItems={menuItems} />
