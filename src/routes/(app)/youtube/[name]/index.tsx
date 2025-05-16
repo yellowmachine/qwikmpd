@@ -1,6 +1,6 @@
 import { component$ } from '@builder.io/qwik';
 import { server$ } from '@builder.io/qwik-city';
-import { loadPlaylist, generateTmpStream, getChannelVideos } from '~/server/mpd';
+import { generateTmpStream, getChannelVideos } from '~/server/mpd';
 import { routeLoader$ } from '@builder.io/qwik-city';
 
 export const useVideos = routeLoader$(async (event) => {
@@ -14,8 +14,7 @@ export const useVideos = routeLoader$(async (event) => {
 
 const generateM3UServer$ = server$(async (videoId: string) => {
   const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-  await generateTmpStream(videoUrl); // Ejecuta yt-dlp y crea el archivo .m3u
-  await loadPlaylist('tmp.m3u')
+  await generateTmpStream(videoUrl);
 });
 
 
@@ -47,11 +46,11 @@ export default component$(() => {
                 <p style={{ fontSize: '0.9rem', color: '#555' }}>
                   {new Date(video.publishedAt).toLocaleDateString()}
                 </p>
-                <a class="bg-blue-600 text-white px-6 py-2 rounded mt-4" 
+                <a class="bg-blue-600 text-white px-6 py-2 rounded mt-4 mr-4" 
                    href={`https://www.youtube.com/watch?v=${video.videoId}`} 
                    target="_blank" 
                    rel="noopener noreferrer">
-                      Ver en YouTube
+                      Watch on YouTube
                 </a>
                 <button class="bg-brand-600 text-white px-6 py-2 rounded mt-4" onClick$={() => generateM3UServer$(video.videoId)}>Stream here!</button>
               </div>

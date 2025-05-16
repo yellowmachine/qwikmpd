@@ -612,7 +612,7 @@ async function writeM3UAsync(playlistName: string, m3uContent: string) {
 export const generateTmpStream = server$(async function (videoUrl: string, playlistName = 'tmp.m3u') {
   
   try {
-    const { stdout } = await execCommand(`yt-dlp -g "${videoUrl}"`);
+    const { stdout } = await execCommand(`yt-dlp -f bestaudio -g "${videoUrl}"`);
     const streamUrl = stdout.trim();
 
     const m3uContent = `#EXTM3U
@@ -620,8 +620,13 @@ export const generateTmpStream = server$(async function (videoUrl: string, playl
 ${streamUrl}
 `;
 
-    await writeM3UAsync('tmp.m3u', m3uContent);
-    console.log(`Playlist ${playlistName} creada correctamente.`);
+    const playlistName = 'tmpYoutube.m3u';
+    if(process.env.NODE_ENV === 'development')
+      await writeM3UAsync(path.join('./playlists', playlistName), m3uContent);
+    else
+      await writeM3UAsync(path.join('/app/playlists', playlistName), m3uContent);
+    await loadPlaylist(playlistName);
+    await play();
   } catch (error) {
     console.error('Error generando la playlist:', error);
   }
