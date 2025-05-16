@@ -17,6 +17,11 @@ const MenuLinks = ({ location, menuItems }: { location: any, menuItems: any[]}) 
       </li>
     ))}
     <li>
+      <Link href="/playlists" class="text-brand-500">
+        <LuRadioTower class="w-8 h-8" />
+      </Link>
+    </li>
+    <li>
       <Link href="/update" class="text-brand-500">
         <LuSettings class="w-8 h-8" />
       </Link>
@@ -53,9 +58,6 @@ export const Menu = component$(() => {
         </Link>
         <Link href="/clients" class="text-brand-500 p-2">
           <LuVolume2 class="w-8 h-8" />
-        </Link>
-        <Link href="/playlists" class="text-brand-500 p-2">
-          <LuRadioTower class="w-8 h-8" />
         </Link>
         <ul class="hidden md:flex gap-4 list-none p-0">
           <MenuLinks location={location} menuItems={menuItems} />
