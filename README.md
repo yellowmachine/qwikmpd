@@ -14,3 +14,23 @@ If you want to use westernMPD as a standalone app, you need to set the following
 - **MPD_SERVER**: URL or hostname of your MPD server (default: `mpd`)
 - **SNAPSERVER_URL**: URL or hostname of your Snapserver instance (default: `snapserver`)
 - **API_KEY_LASTFM**: To display album covers, you need an API key from [Last.fm](https://www.last.fm/es/home).
+
+## Screenshots
+
+### Main Player View
+![Main screen](screenshots/main.png)
+
+### Library
+![Main screen](screenshots/library.png)
+
+### Snapclients
+![Main screen](screenshots/snapclients.png)
+
+### Live radio
+![Main screen](screenshots/liveradio.png)
+
+### Mobile view
+![Main screen](screenshots/mobile.png)
+
+### Manage system
+![Main screen](screenshots/danger.png)

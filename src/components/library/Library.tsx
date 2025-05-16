@@ -67,7 +67,7 @@ export const Library = component$(({initialData}: LibraryProps) => {
                 <h1 class="text-3xl text-brand-300">
                     <ActionButton action={$(() => updateLibrary())} successMessage="ok">
                     <button class="mb-2 cursor-pointer bg-brand-300 hover:bg-brand-300 p-2 rounded text-brand-500 text-xl ml-2">
-                        Actualizar base de datos
+                        Update database
                     </button>
                     </ActionButton>
                 </h1>

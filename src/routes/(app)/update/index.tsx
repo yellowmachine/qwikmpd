@@ -23,12 +23,12 @@ export default component$(() => {
     return <>
         <button onClick$={update} disabled={updating.value}
             class="px-4 py-2 bg-brand-600 text-white rounded cursor-pointer mb-2">
-                Actualizar app (dura varios minutos)
+                Update app (it takes several minutes)
         </button>
         <Console logs={logs.value} />
         {/* Danger Zone */}
       <div class="border-2 border-red-500 rounded-md p-4 mt-8 bg-red-50">
-        <h3 class="text-lg font-semibold text-red-700 mb-2">Zona de peligro</h3>
+        <h3 class="text-lg font-semibold text-red-700 mb-2">Danger zone</h3>
         <div class="flex items-center mb-4">
           <input
             id="danger-toggle"
@@ -38,7 +38,7 @@ export default component$(() => {
             class="mr-2 accent-red-600"
           />
           <label for="danger-toggle" class="text-red-600 font-medium">
-            Habilitar botones de peligro
+            Do you know what you're doing?
           </label>
         </div>
         <div class="flex gap-4">
@@ -47,14 +47,14 @@ export default component$(() => {
             disabled={!dangerEnabled.value}
             onClick$={onShutdown}
           >
-            Apagar
+            Shutdown
           </button>
           <button
             class="bg-red-600 text-white px-4 py-2 rounded disabled:opacity-50"
             disabled={!dangerEnabled.value}
             onClick$={onReboot}
           >
-            Reiniciar
+            Reboot
           </button>
         </div>
       </div>
