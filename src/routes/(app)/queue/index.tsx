@@ -20,14 +20,13 @@ const playThis = $(async function ({pos}: {pos: number, uri: string | undefined}
 export const getLastFmCover = server$(async function(artist: string, album: string){
   
   const apiKey = this.env.get('API_KEY_LASTFM');
-  if (!apiKey) throw new Error('No API key configurada');
+  if (!apiKey)
+    return null; 
 
   const url = `http://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=${apiKey}&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}&format=json`;
 
   const res = await fetch(url);
-  if (!res.ok) 
-  {
-    //console.log(apiKey, artist, album);
+  if (!res.ok) {
     return null;
   }else{
     const data = await res.json();
