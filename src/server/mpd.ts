@@ -499,7 +499,7 @@ export const updateLog = server$(async function(type: 'stdout' | 'stderr', data:
 })
 
 export const createFolder = server$(async function(basePath: string, name: string){
-  const fullPath = path.join(basePath, name);
+  const fullPath = path.join(process.env.NODE_ENV === 'development' ? './music' : '/app/music', basePath, name);
   await fs.mkdir(fullPath, { recursive: true });
   return fullPath;
 })
