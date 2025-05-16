@@ -508,12 +508,21 @@ export const downloadYoutubeAudio = server$(function (
   url: string,
   outputDir: string
 ) {
-  const args = [
-    '-x',           
-    '--audio-format', 'flac', 
-    '-P', path.join('./music', outputDir), 
-    url,         
-  ];
+  let args;
+  if(process.env.NODE_ENV === 'development')
+    args = [
+      '-x',           
+      '--audio-format', 'flac', 
+      '-P', path.join('./music', outputDir), 
+      url,         
+    ];
+  else
+    args = [
+      '-x',           
+      '--audio-format', 'flac', 
+      '-P', path.join('/app/music', outputDir), 
+      url,         
+    ];
 
   const ytdlp = spawn('yt-dlp', args);
 
