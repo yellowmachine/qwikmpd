@@ -7,7 +7,8 @@ import type { Song } from '~/lib/types';
 import { getDb } from './db';
 import type { StatusData, LsInfo, AudioFile } from '~/lib/types';
 import { spawn } from "child_process";
-
+import fs from 'fs/promises';
+import path from 'node:path';
 
 
 export const execCommand = server$(async (cmd: string) => {
@@ -496,6 +497,43 @@ export const updateLog = server$(async function(type: 'stdout' | 'stderr', data:
   const timestamp = markSendIntentBroadcast(type);
   await broadcast({ type, data }, timestamp);
 })
+
+export const createFolder = server$(async function(basePath: string, name: string){
+  const fullPath = path.join(basePath, name);
+  await fs.mkdir(fullPath, { recursive: true });
+  return fullPath;
+})
+
+export const downloadYoutubeAudio = server$(function (
+  url: string,
+  outputDir: string
+) {
+  // Construye los argumentos para yt-dlp
+  const args = [
+    '-x',                // Extrae el audio
+    '--audio-format', 'flac', 
+    '-P', outputDir, // Directorio de destino
+    url,             // URL de YouTube
+  ];
+
+  const ytdlp = spawn('yt-dlp', args);
+
+  ytdlp.stdout.on('data', (data) => {
+    updateLog('stdout', `[YTDLP] ${data.toString()}`);
+  });
+
+  ytdlp.stderr.on('data', (data) => {
+    updateLog('stderr', `[YTDLP] ${data.toString()}`);
+  });
+
+  ytdlp.on('close', (code) => {
+    updateLog('stdout', `[YTDLP] Proceso finalizado con código ${code}\n`);
+  });
+
+  ytdlp.on('error', (err) => {
+    updateLog('stderr', `[YTDLP] Error: ${err.message}`);
+  });
+});
 
 export const executeSSHCommand = server$(function (command: 'shutdown' | 'reboot') {
   const host = this.env.get('SSH_HOST') || 'raspberry.casa';
