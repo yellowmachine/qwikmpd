@@ -34,3 +34,7 @@ If you want to use westernMPD as a standalone app, you need to set the following
 
 ### Manage system
 ![Main screen](screenshots/danger.png)
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
