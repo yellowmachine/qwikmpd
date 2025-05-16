@@ -1,6 +1,6 @@
 import { component$, $ } from '@builder.io/qwik';
 import { useNavigate } from '@builder.io/qwik-city';
-import confetti from 'canvas-confetti';
+//import confetti from 'canvas-confetti';
 import { playHere } from '~/server/mpd';
 
 export interface PlayHereProps {
@@ -11,11 +11,11 @@ export default component$((props: PlayHereProps) => {
   const navigate = useNavigate();
 
   const launchConfetti = $(() => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-    });
+    //confetti({
+    //  particleCount: 100,
+    //  spread: 70,
+    //  origin: { y: 0.6 },
+    //});
     playHere(props.path);
     navigate('/queue');
   });
