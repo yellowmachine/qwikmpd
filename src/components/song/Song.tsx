@@ -24,11 +24,10 @@ export const Song = component$<SongProps>(( {song, currentSong, pos, playThis} )
     const playThisSong = $(async () => {
         await playThis({pos, uri: song.uri});
         
-        //state.clicked = true;
-        //await playThis(pos);
-        //setTimeout(() => {
-        //    state.clicked = false;
-        //}, 500);
+        state.clicked = true;
+        setTimeout(() => {
+            state.clicked = false;
+        }, 1000);
     })
 
     return (
@@ -64,7 +63,7 @@ export const Song = component$<SongProps>(( {song, currentSong, pos, playThis} )
                         100% { background-color: transparent; }
                         }
                         .flash-bg {
-                        animation: flash-bg 0.4s ease-in-out;
+                        animation: flash-bg 1s ease-in-out;
                         }
                     `}</style>
 
