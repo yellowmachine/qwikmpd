@@ -359,7 +359,7 @@ export const list = server$(async function(path: string){
     const status = await client?.api.status.get() as StatusData;
     const current = list.file.find(item => item.title === status.currentSong?.title);
         
-    return { directories: list.directory.map(d => d.directory), files: formatSongArray(list.file), file: list.file, currentSong: current?.title};
+    return { directories: list.directory.map(d => d.directory).sort((a, b) => a > b ? 1 : -1), files: formatSongArray(list.file), file: list.file, currentSong: current?.title};
 })
 
 export const listPlaylist = server$(async function(){
@@ -375,10 +375,6 @@ export const loadPlaylist = server$(async function(name: string){
 })
 
 export const add = server$(async function(path: string){
-    //const listenerIdCookie = this.cookie.get('listenerId');
-    //const listenerId = listenerIdCookie?.number;
-    // ahora puedo mandar un mensaje personalizado al usuario
-
     const client = await getMpdClient(this);
     await client?.api.queue.add(path);
 })
@@ -413,9 +409,6 @@ export const play = server$(withMpdReconnect(async function(client: MPDApi.Clien
     await client.api.playback.play((pos || 0) as unknown as string);
     const db = await getDb();
     const clients = (await db.getData()).clients;
-    //for(let c of clients){
-    //  await restartSnapclient(c.ip);
-    //}
 }))
 
 export const playThis = server$(async function(pos: number){
@@ -501,6 +494,7 @@ export const updateLog = server$(async function(type: 'stdout' | 'stderr', data:
 export const createFolder = server$(async function(basePath: string, name: string){
   const fullPath = path.join(process.env.NODE_ENV === 'development' ? './music' : '/app/music', basePath, name);
   await fs.mkdir(fullPath, { recursive: true });
+  await update();
   return fullPath;
 })
 

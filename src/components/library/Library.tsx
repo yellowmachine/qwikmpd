@@ -130,7 +130,7 @@ export const Library = component$(({initialData}: LibraryProps) => {
                                 >
                                     Cancel
                                 </button>
-                                <ActionButton action={onAccept} warningMessage="you can see the progress on the console (click to close this)">
+                                <ActionButton action={onAccept} warningMessage="you can see the progress on the console">
                                     <button
                                         class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                                         onClick$={onAccept}
@@ -163,7 +163,7 @@ export const Library = component$(({initialData}: LibraryProps) => {
                     placeholder="Folder name"
                 />
                 <button
-                    class="p-2 bg-brand-200 hover:bg-brand-300 text-white rounded disabled:opacity-50 cursor-pointer"
+                    class="p-2 bg-gray-400 hover:bg-gray-500 text-white rounded disabled:opacity-50 cursor-pointer"
                     onClick$={createFolder$}
                     disabled={!folderName.value.trim()}
                 >

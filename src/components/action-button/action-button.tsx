@@ -55,7 +55,7 @@ export const ActionButton = component$<ActionButtonProps>(({ action, successMess
 
       {state.warning && (
         <div onClick$={() => state.warning = ""} 
-          class="cursor-pointer absolute top-full top-1/2 -translate-y-1/2 ml-4 min-w-[100px] px-4 py-2 rounded shadow-lg text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-300">
+          class="cursor-pointer absolute top-full top-1 -translate-y ml-4 min-w-[100px] px-4 py-2 rounded shadow-lg text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-300">
           {warningMessage}
         </div>
       )}
