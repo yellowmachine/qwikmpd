@@ -605,6 +605,109 @@ export const updateAppViaSSHStream = server$(function (){
     
 });
 
+async function writeM3UAsync(playlistName: string, m3uContent: string) {
+  await fs.writeFile(playlistName, m3uContent, 'utf8');
+}
+
+export const generateTmpStream = server$(async function (videoUrl: string, playlistName = 'tmp.m3u') {
+  
+  try {
+    const { stdout } = await execCommand(`yt-dlp -g "${videoUrl}"`);
+    const streamUrl = stdout.trim();
+
+    const m3uContent = `#EXTM3U
+#EXTINF:-1,YouTube Stream
+${streamUrl}
+`;
+
+    await writeM3UAsync('tmp.m3u', m3uContent);
+    console.log(`Playlist ${playlistName} creada correctamente.`);
+  } catch (error) {
+    console.error('Error generando la playlist:', error);
+  }
+});
+
+export type YouTubeSearchItem = {
+  kind: string;
+  etag: string;
+  id: {
+    kind: string;
+    videoId?: string;
+    playlistId?: string;
+    channelId?: string;
+  };
+  snippet: {
+    publishedAt: string;
+    channelId: string;
+    title: string;
+    description: string;
+    thumbnails: {
+      default?: { url: string; width: number; height: number };
+      medium?: { url: string; width: number; height: number };
+      high?: { url: string; width: number; height: number };
+      standard?: { url: string; width: number; height: number };
+      maxres?: { url: string; width: number; height: number };
+    };
+    channelTitle: string;
+    liveBroadcastContent: string;
+    publishTime: string;
+  };
+};
+
+export type MappedYouTubeVideo = {
+  videoId: string;
+  title: string;
+  description: string;
+  publishedAt: string;
+  thumbnails: {
+    default?: { url: string; width: number; height: number };
+    medium?: { url: string; width: number; height: number };
+    high?: { url: string; width: number; height: number };
+    standard?: { url: string; width: number; height: number };
+    maxres?: { url: string; width: number; height: number };
+  };
+  channelTitle: string;
+};
+
+
+export const getChannelVideos = server$(async function(channelId: string): Promise<MappedYouTubeVideo[]> {
+  const url = `https://www.googleapis.com/youtube/v3/search?key=${this.env.get('YOUTUBE_API_KEY')}&channelId=${channelId}&part=snippet&order=date&maxResults=10&type=video`;
+
+  //console.log(url);
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    console.log(`Error al consultar la API: ${response.status} ${response.statusText}`);
+    return [];
+  }
+  const data = await response.json();
+  return data.items.map( (item: YouTubeSearchItem) => ({
+    videoId: item.id.videoId,
+    title: item.snippet.title,
+    description: item.snippet.description,
+    publishedAt: item.snippet.publishedAt,
+    thumbnails: item.snippet.thumbnails,
+    channelTitle: item.snippet.channelTitle,
+  }));
+})
+
+export const getChannelIdFromVideo = server$(async function(videoId: string) {
+  const apiKey = this.env.get('YOUTUBE_API_KEY');
+  const url = `https://www.googleapis.com/youtube/v3/videos?key=${apiKey}&id=${videoId}&part=snippet`;
+
+  const response = await fetch(url);
+  if (!response.ok) throw new Error('Error al consultar la API de YouTube');
+  const data = await response.json();
+
+  if (!data.items || data.items.length === 0) {
+    throw new Error('No se encontró el video');
+  }
+
+  return data.items[0].snippet.channelId;
+});
+
+
+
 export type QueueData = {queue: Song[], currentSong: string};
 type QueueEvent = { type: 'queue', data: QueueData}
 type StatusEvent = { type: 'status', data: StatusData}
