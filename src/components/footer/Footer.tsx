@@ -17,5 +17,7 @@ export const Footer = component$(() => (
         height={24}
       />
     </a>
+    <p />
+    <a href="http://www.freepik.com">App icon designed by macrovector / Freepik</a>
   </footer>
 ));
