@@ -45,7 +45,8 @@ export default component$(() => {
                    rel="noopener noreferrer">
                       Watch on YouTube
                 </a>
-                <button class="bg-brand-600 text-white px-6 py-2 rounded mt-4" onClick$={() => generateM3U(video.videoId)}>Stream here!</button>
+                <button class="bg-brand-600 text-white px-6 py-2 rounded mt-4" 
+                  onClick$={() => generateM3U({videoId: video.videoId, title: video.title, channelTitle: video.channelTitle})}>Stream here!</button>
               </div>
             ))}
           </div>

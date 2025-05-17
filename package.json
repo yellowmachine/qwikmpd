@@ -38,6 +38,7 @@
     "@builder.io/qwik": "^1.13.0",
     "@builder.io/qwik-city": "^1.13.0",
     "@modular-forms/qwik": "^0.29.1",
+    "@qwik-ui/headless": "^0.6.7",
     "@qwikdev/pwa": "^0.0.4",
     "@qwikest/icons": "^0.0.13",
     "@storybook/addon-essentials": "^8.2.8",
