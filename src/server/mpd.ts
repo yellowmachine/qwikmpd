@@ -9,6 +9,7 @@ import type { StatusData, LsInfo, AudioFile } from '~/lib/types';
 import { spawn } from "child_process";
 import fs from 'fs/promises';
 import path from 'node:path';
+import meta from '~/components/action-button/action-button.stories';
 
 
 export const execCommand = server$(async (cmd: string) => {
@@ -609,13 +610,13 @@ async function writeM3UAsync(playlistName: string, m3uContent: string) {
   await fs.writeFile(playlistName, m3uContent, 'utf8');
 }
 
-export const generateTmpStream = server$(async function (videoUrl: string) {
+export const generateTmpStream = server$(async function (videoUrl: string, metadata: {videoId: string, title: string, channelTitle: string}) {
   try {
     const { stdout } = await execCommand(`yt-dlp -f bestaudio -g "${videoUrl}"`);
     const streamUrl = stdout.trim();
 
     const m3uContent = `#EXTM3U
-#EXTINF:-1,YouTube Stream
+#EXTINF:-1,${metadata.channelTitle} - ${metadata.title}
 ${streamUrl}
 `;
 
@@ -673,9 +674,9 @@ export type MappedYouTubeVideo = {
   channelTitle: string;
 };
 
-export const generateM3U = server$(async (videoId: string) => {
-  const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-  await generateTmpStream(videoUrl);
+export const generateM3U = server$(async (metadata: {videoId: string, title: string, channelTitle: string}) => {
+  const videoUrl = `https://www.youtube.com/watch?v=${metadata.videoId}`;
+  await generateTmpStream(videoUrl, metadata);
 });
 
 export const getChannelVideos = server$(async function(channelId: string): Promise<MappedYouTubeVideo[]> {
