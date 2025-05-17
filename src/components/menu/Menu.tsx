@@ -1,6 +1,6 @@
 import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import { Link, useLocation } from '@builder.io/qwik-city';
-import { LuMenu, LuSettings, LuLibraryBig, LuListMusic, LuVolume2, LuRadioTower, LuYoutube } from '@qwikest/icons/lucide';
+import { LuMenu, LuSettings, LuLibraryBig, LuListMusic, LuVolume2, LuRadioTower, LuYoutube, LuTwitch } from '@qwikest/icons/lucide';
 
 const MenuLinks = ({ location, menuItems }: { location: any, menuItems: any[]}) => (
   <>
@@ -24,6 +24,11 @@ const MenuLinks = ({ location, menuItems }: { location: any, menuItems: any[]}) 
     <li>
       <Link href="/youtube" class="text-brand-500">
         <LuYoutube class="w-8 h-8" />
+      </Link>
+    </li>
+    <li>
+      <Link href="/twitch" class="text-brand-500">
+        <LuTwitch class="w-8 h-8" />
       </Link>
     </li>
     <li>

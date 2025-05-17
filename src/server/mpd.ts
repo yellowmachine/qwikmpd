@@ -538,6 +538,13 @@ export const downloadYoutubeAudio = server$(function (
   });
 });
 
+export const playLiveTwitch = server$(async function (channel: string) {
+  const url = `http://app/api/twitch/${channel}`;
+  //const url = `http://192.168.1.44:4173/api/twitch/${channel}`;
+  await playUri(url);
+  await play();
+});
+
 export const executeSSHCommand = server$(function (command: 'shutdown' | 'reboot') {
   const host = this.env.get('SSH_HOST') || 'raspberry.casa';
   const user = this.env.get('SSH_USER') || 'miguel';
