@@ -627,8 +627,7 @@ ${streamUrl}
     await loadPlaylist(playlistName.replace(/\.m3u$/, ''));
     await play();
   } catch (error) {
-    console.error('Error generando la playlist:', error);
-    throw error;
+    throw new ServerError(500, 'Error generando la playlist');
   }
 });
 
@@ -675,7 +674,6 @@ export type MappedYouTubeVideo = {
 };
 
 export const generateM3U = server$(async (videoId: string) => {
-  throw new ServerError(401, { code: 401, message: 'Unauthorized' });
   const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
   await generateTmpStream(videoUrl);
 });

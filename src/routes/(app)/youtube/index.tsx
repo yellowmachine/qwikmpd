@@ -81,9 +81,6 @@ export default component$(() => {
     try{
         generating.value = true;
         await generateM3U(videoId);
-    }catch(err){
-        console.log(err)
-        //throw err;
     }
     finally{
         generating.value = false;
