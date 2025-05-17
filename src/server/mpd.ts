@@ -610,7 +610,6 @@ async function writeM3UAsync(playlistName: string, m3uContent: string) {
 }
 
 export const generateTmpStream = server$(async function (videoUrl: string) {
-  
   try {
     const { stdout } = await execCommand(`yt-dlp -f bestaudio -g "${videoUrl}"`);
     const streamUrl = stdout.trim();
@@ -628,7 +627,7 @@ ${streamUrl}
     await loadPlaylist(playlistName.replace(/\.m3u$/, ''));
     await play();
   } catch (error) {
-    console.error('Error generando la playlist:', error);
+    throw new ServerError(500, 'Error generando la playlist');
   }
 });
 
@@ -674,11 +673,13 @@ export type MappedYouTubeVideo = {
   channelTitle: string;
 };
 
+export const generateM3U = server$(async (videoId: string) => {
+  const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  await generateTmpStream(videoUrl);
+});
 
 export const getChannelVideos = server$(async function(channelId: string): Promise<MappedYouTubeVideo[]> {
   const url = `https://www.googleapis.com/youtube/v3/search?key=${this.env.get('YOUTUBE_API_KEY')}&channelId=${channelId}&part=snippet&order=date&maxResults=10&type=video`;
-
-  //console.log(url);
 
   const response = await fetch(url);
   if (!response.ok) {

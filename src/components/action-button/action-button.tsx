@@ -31,7 +31,8 @@ export const ActionButton = component$<ActionButtonProps>(({ action, successMess
         state.success = false;
       }, 2500);
     } catch (e) {
-      state.error = e instanceof Error ? e.message : String(e);
+      const errorMessage = (e as Error).message || String(e);
+      state.error = errorMessage;
       setTimeout(() => {
         state.error = null;
       }, 2500);
