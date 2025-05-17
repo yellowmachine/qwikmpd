@@ -1,5 +1,5 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
-import { server$ } from '@builder.io/qwik-city';
+import { Link, server$ } from '@builder.io/qwik-city';
 import YoutubeSearch from '~/components/youtube/YoutubeSearch';
 import YoutubeVideo from '~/components/youtube/YoutubeVideo';
 
@@ -63,6 +63,9 @@ export default component$(() => {
   return (
     <div class="max-w-md mx-auto p-4">
       <h1 class="text-2xl mb-4 text-brand-600">Youtube</h1>
+      <Link href="/youtube/UCDptIDyUZvphf_9FLfrDjBw" class="text-sm text-brand-600">Semons Channel</Link>
+      <Link href="/youtube/UC4STOuaIY9iqh7Lzrq_EVYQ" class="text-sm text-brand-600">Alex White</Link>
+      <Link href="/youtube/UCmdvAxEJ14EvXdASKbodj1Q" class="text-sm text-brand-600">David Parcerisa</Link>
       <div class="flex gap-2 mb-4">
         <YoutubeSearch onSelect$={handleSearch} />
       </div>
