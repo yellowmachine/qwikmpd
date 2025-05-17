@@ -62,7 +62,7 @@ export default component$(() => {
 
   return (
     <div class="max-w-md mx-auto p-4">
-      <h1 class="text-2xl mb-4 text-brand-600">Search videos on Youtube</h1>
+      <h1 class="text-2xl mb-4 text-brand-600">Youtube</h1>
       <div class="flex gap-2 mb-4">
         <YoutubeSearch onSelect$={handleSearch} />
       </div>

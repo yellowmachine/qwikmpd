@@ -109,10 +109,16 @@ const fetchOptions = $(async (query: string) => {
               value={opt.videoId}
               class="cursor-pointer px-4 py-2 hover:bg-gray-100"
             >
-              <Combobox.ItemLabel>{opt.title}</Combobox.ItemLabel>
-               <div>
-                    <span class="text-xs text-gray-400">{opt.channelTitle}</span>
-                </div>
+            <div class="flex items-center gap-3">
+                <img
+                    width={100}
+                    height={100}   
+                    class="w-8 h-8 rounded"
+                    src={opt.thumbnails.default?.url}
+                    alt={opt.title}
+                />
+                <Combobox.ItemLabel class="text-brand-600">{opt.title}</Combobox.ItemLabel>
+            </div>
             </Combobox.Item>
           ))}
         </Combobox.Popover>
