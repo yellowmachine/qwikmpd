@@ -1,6 +1,6 @@
 import { component$, Slot } from "@builder.io/qwik";
 import { type RequestHandler } from "@builder.io/qwik-city";
-import { getDb } from "~/server/db";
+import { getDb } from "~/server/db.server";
 
 
 export const onRequest: RequestHandler = async ({ redirect, url }) => {

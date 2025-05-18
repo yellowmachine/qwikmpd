@@ -3,7 +3,7 @@ import { routeLoader$ } from '@builder.io/qwik-city';
 import { type InitialValues } from '@modular-forms/qwik';
 import Admin from '~/components/admin/Admin';
 import { type SettingsForm } from '~/lib/schemas';
-import { getDb } from '~/server/db';
+import { getDb } from '~/server/db.server';
 
 export const useSettingsLoader = routeLoader$<InitialValues<SettingsForm>>(async () => {
   const db = await getDb();

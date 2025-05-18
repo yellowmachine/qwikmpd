@@ -2,7 +2,7 @@ import { $, component$, type QRL } from '@builder.io/qwik';
 import { useForm, valiForm$, type SubmitHandler, insert, remove } from '@modular-forms/qwik';
 import { SettingsSchema, type SettingsForm } from '~/lib/schemas';
 import { server$ } from '@builder.io/qwik-city';
-import { getDb } from '~/server/db';
+import { getDb } from '~/server/db.server';
 import { useSettingsLoader } from '~/routes/(app)/admin';
 import * as v from 'valibot';
 
