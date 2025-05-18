@@ -1,19 +1,38 @@
-//import { access } from 'node:fs/promises';
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
-import type { SettingsForm } from '~/lib/schemas';
+//import type { SettingsForm } from '~/lib/schemas';
 import AwaitLock from 'await-lock';
+import { server$ } from '@builder.io/qwik-city';
 
 
-export type Data = SettingsForm;
+type Video = {
+  videoId: string;
+  channelTitle: string;
+}
+
+//export type Data = SettingsForm;
+export type Data = {
+  setupDone: boolean;
+  volume: number;
+  youtube: {
+    favorites: Video[];
+  }
+}
+
 const dbFile = 'data/db.json';
 
 const defaultData: Data = {
-  server: { ip: '127.0.0.1' },
+  /*server: { ip: '127.0.0.1' },
   clients: [],
   setupDone: false,
   volume: 50,
   latency: 100,
+  */
+  setupDone: true,
+  volume: 50,
+  youtube: {
+    favorites: [],
+  }
 };
 
 class LowdbAdapter {
@@ -55,6 +74,23 @@ class LowdbAdapter {
     await this.setData({ volume: value });
   }
 
+  async getYoutubeFavorites() {
+    return (await this.getData()).youtube.favorites;
+  }
+  async addYoutubeFavorite(video: Video) {
+    const data = await this.getData();
+    if (!data.youtube.favorites.map(v => v.videoId).includes(video.videoId)) {
+      await this.setData({...data, youtube: { ...data.youtube, favorites: [...data.youtube.favorites, video] } });
+    }
+  }
+  async removeYoutubeFavorite(videoId: string) {
+    const data = await this.getData();
+    if (data.youtube.favorites.map( v=> v.videoId).includes(videoId)) {
+      const favorites = data.youtube.favorites.filter((video) => video.videoId !== videoId);
+      await this.setData({ ...data, youtube: { ...data.youtube, favorites } });
+    }
+  }
+
   async getSetupDone() {
     return true;
     //const data = await this.getData();
@@ -65,7 +101,7 @@ class LowdbAdapter {
 
     await this.setData({ 
         setupDone: true, 
-        server: { ip },
+        //server: { ip },
       });
   }
 
@@ -88,3 +124,18 @@ export async function getDb() {
   }
   return adapter;
 }
+
+export const addYoutubeFavorite = server$(async function(video: Video) {
+  const db = await getDb();
+  await db.addYoutubeFavorite(video);
+})
+
+export const removeYoutubeFavorite = server$(async function(videoId: string){
+  const db = await getDb();
+  await db.removeYoutubeFavorite(videoId);
+})
+
+export const getYoutubeFavorites = server$(async function(){
+  const db = await getDb();
+  return await db.getYoutubeFavorites();
+})

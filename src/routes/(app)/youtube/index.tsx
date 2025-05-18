@@ -1,7 +1,9 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
-import { Link, server$ } from '@builder.io/qwik-city';
+import { Link, routeLoader$, server$ } from '@builder.io/qwik-city';
+import { LuHeart, LuHeartOff } from '@qwikest/icons/lucide';
 import YoutubeSearch from '~/components/youtube/YoutubeSearch';
 import YoutubeVideo from '~/components/youtube/YoutubeVideo';
+import { addYoutubeFavorite, getYoutubeFavorites, removeYoutubeFavorite } from '~/server/db';
 
 
 export type YouTubeVideo = {
@@ -18,10 +20,12 @@ export type YouTubeVideo = {
   publishedAt: string;
 };
 
+export const useFavorites = routeLoader$(async () => {
+  return await getYoutubeFavorites();
+  
+});
 
-const searchYouTubeChannels = server$(async function(
-  q: string
-): Promise<YouTubeVideo[]> {
+const searchYouTubeChannels = server$(async function(q: string): Promise<YouTubeVideo[]> {
 
   const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(q    
   )}&key=${this.env.get('YOUTUBE_API_KEY')}`;
@@ -44,9 +48,17 @@ const searchYouTubeChannels = server$(async function(
 
 
 export default component$(() => {
+  
   const results = useSignal<YouTubeVideo[]>([]);
   const loading = useSignal(false);
   const error = useSignal<string | null>(null);
+
+
+  const favorites  = useFavorites();
+
+  const isFavorite = (videoId: string) => {
+    return favorites.value.some((favorite) => favorite.videoId === videoId);
+  };
 
   const handleSearch = $(async (value: string) => {
     error.value = null;
@@ -63,8 +75,10 @@ export default component$(() => {
   return (
     <div class="max-w-md mx-auto p-4">
       <h1 class="text-2xl mb-4 text-brand-600">Youtube</h1>
-      <Link href="/youtube/UCDptIDyUZvphf_9FLfrDjBw" class="text-sm text-brand-600">Semons Channel</Link>
+      <Link href="/youtube/UCDptIDyUZvphf_9FLfrDjBw" class="text-sm text-brand-600">Semonster</Link>
+      <p/>
       <Link href="/youtube/UC4STOuaIY9iqh7Lzrq_EVYQ" class="text-sm text-brand-600">Alex White</Link>
+      <p/>
       <Link href="/youtube/UCmdvAxEJ14EvXdASKbodj1Q" class="text-sm text-brand-600">David Parcerisa</Link>
       <div class="flex gap-2 mb-4">
         <YoutubeSearch onSelect$={handleSearch} />
@@ -74,6 +88,7 @@ export default component$(() => {
         {results.value.map((video) => (
           <li key={video.channelId} class="border p-2 rounded border-2 border-brand-300">
             <div class="flex items-center gap-2">
+              <Link href={`/youtube/${video.channelId}`} class="text-sm text-brand-600">
                 <img
                     width={100}
                     height={100}
@@ -81,6 +96,20 @@ export default component$(() => {
                     alt={video.title}
                     class="w-10 h-10 rounded"
                 />
+              </Link>
+              {isFavorite(video.videoId) ? (
+                <LuHeart class="text-red-600" 
+                onClick$={async () => {
+                  await removeYoutubeFavorite(video.videoId);
+                }}
+                />
+              ) : (
+                <LuHeartOff class="text-brand-600" 
+                onClick$={async () => {
+                  await addYoutubeFavorite({videoId: video.videoId, channelTitle: video.channelTitle});  
+                }}
+                />
+              )}
                 <div class="">
                     <div class="font-bold text-brand-700">{video.title}</div>
                     <div class="text-xs text-brand-500">{video.description}</div>
