@@ -24,7 +24,7 @@ export type Data = {
   }
 }
 
-const dbFile =  'data/db.json' //path.join(process.cwd(), 'data', 'db.json') // 'data/db.json';
+const dbFile = process.env.NODE_ENV === 'production' ? '/app/data/db.json' : 'data/db.json' 
 
 const defaultData: Data = {
   server: { ip: '127.0.0.1' },
