@@ -1,39 +1,17 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
-import { Link, routeLoader$, server$ } from '@builder.io/qwik-city';
+import { Link, server$ } from '@builder.io/qwik-city';
 import YoutubeVideo from '~/components/youtube/YoutubeVideo';
-import type { Channel } from '~/server/db.server';
+import { 
+  useFavorites, type Channel,
+  //addYoutubeFavorite$, 
+  //removeYoutubeFavorite$
+ } from '~/server/youtube';
+import type { YoutubeVideo as YT } from '~/server/youtube';
+
+export {useFavorites} from '~/server/youtube'
 
 
-export type YouTubeVideo = {
-  videoId: string;
-  title: string;
-  description: string;
-  thumbnails: {
-    default?: { url: string; width?: number; height?: number };
-    medium?: { url: string; width?: number; height?: number };
-    high?: { url: string; width?: number; height?: number };
-  };
-  channelId: string;
-  channelTitle: string;
-  publishedAt: string;
-};
-
-export const useFavorites = routeLoader$(async () => {
-  const { getYoutubeFavorites } = await import('~/server/db.server');
-  return await getYoutubeFavorites();
-});
-
-const addYoutubeFavorite$ = server$(async function(channel: Channel) {
-  const { addYoutubeFavorite } = await import('~/server/db.server');
-  return await addYoutubeFavorite(channel);
-});
-
-const removeYoutubeFavorite$ = server$(async function(channelId: string) {
-  const { removeYoutubeFavorite } = await import('~/server/db.server');
-  return await removeYoutubeFavorite(channelId);
-});
-
-const searchYouTubeChannels = server$(async function(q: string): Promise<YouTubeVideo[]> {
+const searchYouTubeChannels = server$(async function(q: string): Promise<YT[]> {
 
   const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(q    
   )}&key=${this.env.get('YOUTUBE_API_KEY')}`;
@@ -54,10 +32,19 @@ const searchYouTubeChannels = server$(async function(q: string): Promise<YouTube
   }));
 })
 
+const addYoutubeFavorite$ = server$(async function(channel: Channel) {
+  const { addYoutubeFavorite } = await import('~/server/db.server');
+  return await addYoutubeFavorite(channel);
+});
+
+const removeYoutubeFavorite$ = server$(async function(channelId: string) {
+  const { removeYoutubeFavorite } = await import('~/server/db.server');
+  return await removeYoutubeFavorite(channelId);
+});
 
 export default component$(() => {
   
-  const results = useSignal<YouTubeVideo[]>([]);
+  const results = useSignal<YT[]>([]);
   const loading = useSignal(false);
   const error = useSignal<string | null>(null);
   const favorites  = useFavorites();
@@ -67,14 +54,13 @@ export default component$(() => {
     return localFavorites.value.some((favorite) => favorite.channelId === channelId);
   };
 
-  const onAdd = $(async (video: YouTubeVideo) => {
-    const newFavorites = await addYoutubeFavorite$({channelId: video.channelId, channelTitle: video.channelTitle,
-      thumbnail: video.thumbnails.default?.url || video.thumbnails.medium?.url || video.thumbnails.high?.url})
+  const onAdd = $(async (video: YT) => {
+    const newFavorites = await addYoutubeFavorite$({channelId: video.channelId, channelTitle: video.channelTitle, thumbnail: video.thumbnails.default.url});
     localFavorites.value = newFavorites;
   })
 
-  const onRemove = $(async (videoId: string) => {
-    const newFavorites = await removeYoutubeFavorite$(videoId)
+  const onRemove = $(async (channelId: string) => {
+    const newFavorites = await removeYoutubeFavorite$(channelId)
     localFavorites.value = newFavorites;
   })
 
@@ -85,7 +71,7 @@ export default component$(() => {
     try {
       results.value = await searchYouTubeChannels(value);
     } catch (e: any) {
-      error.value = e.message || 'Error al buscar canales';
+      error.value = e.message || 'Error searching YouTube';
     }
     loading.value = false;
   });
@@ -134,36 +120,13 @@ export default component$(() => {
       <ul class="space-y-2">
         {results.value.map((video) => (
           <li key={video.channelId} class="border p-2 rounded border-2 border-brand-300">
-            <div class="flex items-center gap-2">
-              <Link href={`/youtube/${video.channelId}`} class="text-sm text-brand-600">
-                <img
-                    width={100}
-                    height={100}
-                    src={video.thumbnails.high?.url || video.thumbnails.medium?.url || video.thumbnails.default?.url}
-                    alt={video.title}
-                    class="w-10 h-10 rounded"
-                />
-              </Link>
-                <div class="">
-                  {isFavorite(video.channelId) ? 
-                  <span onClick$={$(() => onRemove(video.channelId))} class="text-sm text-brand-600 cursor-pointer">❤️</span> : 
-                  <span onClick$={$(() => onAdd(video))} class="text-sm text-brand-600 cursor-pointer">🤍</span>}
-                    <div class="font-bold text-brand-700">{video.title}</div>
-                    <div class="text-xs text-brand-500">{video.description}</div>
-                </div>
-            </div>
             <div class="mt-2">
-                <a class="bg-blue-600 text-white px-6 py-2 rounded ml-4" 
-                    href={`https://www.youtube.com/watch?v=${video.videoId}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer">
-                    Watch on YouTube
-                </a>
                 <YoutubeVideo 
-                  channelTitle={video.channelTitle}
-                  videoId={video.videoId} 
-                  title={video.title} 
-                  description={video.description} />
+                  video={video}
+                  onAdd={$(() => onAdd(video))}
+                  onRemove={$(() => onRemove(video.channelId))}
+                  isFavorite={isFavorite(video.channelId)}
+                  />
             </div>            
           </li>
         ))}

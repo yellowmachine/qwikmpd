@@ -1,20 +1,7 @@
 import { component$, useSignal, $, type QRL } from '@builder.io/qwik';
 import { server$ } from '@builder.io/qwik-city';
 import { Combobox } from '@qwik-ui/headless';
-
-export type YouTubeVideo = {
-  videoId: string;
-  title: string;
-  description: string;
-  thumbnails: {
-    default?: { url: string; width?: number; height?: number };
-    medium?: { url: string; width?: number; height?: number };
-    high?: { url: string; width?: number; height?: number };
-  };
-  channelId: string;
-  channelTitle: string;
-  publishedAt: string;
-};
+import type { YoutubeVideo } from '~/server/youtube';
 
 // Hook de debounce
 export const useDebouncer = <A extends readonly unknown[], R>(
@@ -33,7 +20,7 @@ export const useDebouncer = <A extends readonly unknown[], R>(
 
 const searchYouTubeChannels = server$(async function(
   q: string
-): Promise<YouTubeVideo[]> {
+): Promise<YoutubeVideo[]> {
 
   const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&maxResults=10&q=${encodeURIComponent(q
   )}&key=${this.env.get('YOUTUBE_API_KEY')}`;
@@ -60,7 +47,7 @@ interface AutocompleteProps {
 }
 
 export default component$((props: AutocompleteProps) => {
-    const options = useSignal<YouTubeVideo[]>([
+    const options = useSignal<YoutubeVideo[]>([
     ]);
   
     const displayValue = useSignal('');

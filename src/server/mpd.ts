@@ -666,27 +666,14 @@ export type YouTubeSearchItem = {
   };
 };
 
-export type MappedYouTubeVideo = {
-  videoId: string;
-  title: string;
-  description: string;
-  publishedAt: string;
-  thumbnails: {
-    default?: { url: string; width: number; height: number };
-    medium?: { url: string; width: number; height: number };
-    high?: { url: string; width: number; height: number };
-    standard?: { url: string; width: number; height: number };
-    maxres?: { url: string; width: number; height: number };
-  };
-  channelTitle: string;
-};
+//import type { YoutubeVideo } from '~/server/youtube';
 
 export const generateM3U = server$(async (metadata: {videoId: string, title: string, channelTitle: string}) => {
   const videoUrl = `https://www.youtube.com/watch?v=${metadata.videoId}`;
   await generateTmpStream(videoUrl, metadata);
 });
 
-export const getChannelVideos = server$(async function(channelId: string): Promise<MappedYouTubeVideo[]> {
+export const getChannelVideos = server$(async function(channelId: string): Promise<YoutubeVideo[]> {
   const url = `https://www.googleapis.com/youtube/v3/search?key=${this.env.get('YOUTUBE_API_KEY')}&channelId=${channelId}&part=snippet&order=date&maxResults=10&type=video`;
 
   const response = await fetch(url);
@@ -694,15 +681,7 @@ export const getChannelVideos = server$(async function(channelId: string): Promi
     console.log(`Error al consultar la API: ${response.status} ${response.statusText}`);
     return [];
   }
-  const data = await response.json();
-  return data.items.map( (item: YouTubeSearchItem) => ({
-    videoId: item.id.videoId,
-    title: item.snippet.title,
-    description: item.snippet.description,
-    publishedAt: item.snippet.publishedAt,
-    thumbnails: item.snippet.thumbnails,
-    channelTitle: item.snippet.channelTitle,
-  }));
+  return await response.json();
 })
 
 export const getChannelIdFromVideo = server$(async function(videoId: string) {
@@ -710,7 +689,7 @@ export const getChannelIdFromVideo = server$(async function(videoId: string) {
   const url = `https://www.googleapis.com/youtube/v3/videos?key=${apiKey}&id=${videoId}&part=snippet`;
 
   const response = await fetch(url);
-  if (!response.ok) throw new Error('Error al consultar la API de YouTube');
+  if (!response.ok) throw new Error('Error al consultar la API de Youtube');
   const data = await response.json();
 
   if (!data.items || data.items.length === 0) {
@@ -758,3 +737,39 @@ export const emptyStatus: StatusData = {
     
 } as StatusData;
   
+export type Channel = {
+  channelId: string;
+  channelTitle: string;
+  thumbnail?: string;  
+}
+
+export type YoutubeVideo = {
+  thumbnails: {
+    default: {
+      url: string;
+    };
+    medium: {
+      url: string;
+    };
+    high: {
+      url: string;
+    };
+  };
+  channelId: string;
+  channelTitle: string;
+  tittle: string;
+  description: string;
+  title: string;
+  videoId: string;
+};
+
+
+export const addYoutubeFavorite$ = server$(async function(channel: Channel) {
+  const { addYoutubeFavorite } = await import('~/server/db.server');
+  return await addYoutubeFavorite(channel);
+});
+
+export const removeYoutubeFavorite$ = server$(async function(channelId: string) {
+  const { removeYoutubeFavorite } = await import('~/server/db.server');
+  return await removeYoutubeFavorite(channelId);
+});
