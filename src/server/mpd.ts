@@ -4,7 +4,7 @@ import mpdApi, { type MPDApi } from 'mpd-api';
 import WaitQueue from 'wait-queue';
 import { formatSongArray } from '~/lib/song';
 import type { Song } from '~/lib/types';
-import { getDb } from './db';
+import { getDb } from './db.server';
 import type { StatusData, LsInfo, AudioFile } from '~/lib/types';
 import { spawn } from "child_process";
 import fs from 'fs/promises';

@@ -1,9 +1,8 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
 import { Link, routeLoader$, server$ } from '@builder.io/qwik-city';
-import { LuHeart, LuHeartOff } from '@qwikest/icons/lucide';
-import YoutubeSearch from '~/components/youtube/YoutubeSearch';
+//import YoutubeSearch from '~/components/youtube/YoutubeSearch';
 import YoutubeVideo from '~/components/youtube/YoutubeVideo';
-import { addYoutubeFavorite, getYoutubeFavorites, removeYoutubeFavorite } from '~/server/db';
+import type { Video } from '~/server/db.server';
 
 
 export type YouTubeVideo = {
@@ -21,8 +20,18 @@ export type YouTubeVideo = {
 };
 
 export const useFavorites = routeLoader$(async () => {
+  const { getYoutubeFavorites } = await import('~/server/db.server');
   return await getYoutubeFavorites();
-  
+});
+
+const addYoutubeFavorite$ = server$(async function(video: Video) {
+  const { addYoutubeFavorite } = await import('~/server/db.server');
+  return await addYoutubeFavorite(video);
+});
+
+const removeYoutubeFavorite$ = server$(async function(videoId: string) {
+  const { removeYoutubeFavorite } = await import('~/server/db.server');
+  return await removeYoutubeFavorite(videoId);
 });
 
 const searchYouTubeChannels = server$(async function(q: string): Promise<YouTubeVideo[]> {
@@ -52,13 +61,22 @@ export default component$(() => {
   const results = useSignal<YouTubeVideo[]>([]);
   const loading = useSignal(false);
   const error = useSignal<string | null>(null);
-
-
   const favorites  = useFavorites();
+  const localFavorites = useSignal(favorites.value);
 
   const isFavorite = (videoId: string) => {
     return favorites.value.some((favorite) => favorite.videoId === videoId);
   };
+
+  const onAdd = $(async (video: Video) => {
+    const newFavorites = await addYoutubeFavorite$(video)
+    localFavorites.value = newFavorites;
+  })
+
+  const onRemove = $(async (videoId: string) => {
+    const newFavorites = await removeYoutubeFavorite$(videoId)
+    localFavorites.value = newFavorites;
+  })
 
   const handleSearch = $(async (value: string) => {
     error.value = null;
@@ -81,7 +99,20 @@ export default component$(() => {
       <p/>
       <Link href="/youtube/UCmdvAxEJ14EvXdASKbodj1Q" class="text-sm text-brand-600">David Parcerisa</Link>
       <div class="flex gap-2 mb-4">
-        <YoutubeSearch onSelect$={handleSearch} />
+        {/*<YoutubeSearch onSelect$={handleSearch} />*/}
+        <input type="text"
+          class="border border-brand-300 rounded p-2 w-full"
+          placeholder="Search YouTube"
+          onChange$={(e) => {
+            handleSearch((e.target as HTMLInputElement).value);
+          }}
+        />
+        <button
+          class="bg-blue-600 text-white px-4 py-2 rounded"
+          onClick$={() => handleSearch('')}
+        >
+          Search
+        </button>
       </div>
       {error.value && <div class="text-red-600 mb-2">{error.value}</div>}
       <ul class="space-y-2">
@@ -97,20 +128,10 @@ export default component$(() => {
                     class="w-10 h-10 rounded"
                 />
               </Link>
-              {isFavorite(video.videoId) ? (
-                <LuHeart class="text-red-600" 
-                onClick$={async () => {
-                  await removeYoutubeFavorite(video.videoId);
-                }}
-                />
-              ) : (
-                <LuHeartOff class="text-brand-600" 
-                onClick$={async () => {
-                  await addYoutubeFavorite({videoId: video.videoId, channelTitle: video.channelTitle});  
-                }}
-                />
-              )}
                 <div class="">
+                  {isFavorite(video.videoId) ? 
+                  <span onClick$={$(() => onRemove(video.videoId))} class="text-sm text-brand-600 cursor-pointer">❤️</span> : 
+                  <span onClick$={$(() => onAdd(video))} class="text-sm text-brand-600 cursor-pointer">🤍</span>}
                     <div class="font-bold text-brand-700">{video.title}</div>
                     <div class="text-xs text-brand-500">{video.description}</div>
                 </div>

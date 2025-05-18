@@ -4,7 +4,7 @@ import type { InitialValues, SubmitHandler } from '@modular-forms/qwik';
 import { useForm, valiForm$ } from '@modular-forms/qwik';
 import { Host as SetupSchema } from '~/server/schemas'; 
 import * as v from 'valibot';
-import { getDb } from '~/server/db';
+import { getDb } from '~/server/db.server';
 
 
 type SetupForm = v.InferInput<typeof SetupSchema>;
