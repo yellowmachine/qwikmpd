@@ -1,8 +1,7 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
 import { Link, routeLoader$, server$ } from '@builder.io/qwik-city';
-//import YoutubeSearch from '~/components/youtube/YoutubeSearch';
 import YoutubeVideo from '~/components/youtube/YoutubeVideo';
-import type { Video } from '~/server/db.server';
+import type { Channel } from '~/server/db.server';
 
 
 export type YouTubeVideo = {
@@ -24,14 +23,14 @@ export const useFavorites = routeLoader$(async () => {
   return await getYoutubeFavorites();
 });
 
-const addYoutubeFavorite$ = server$(async function(video: Video) {
+const addYoutubeFavorite$ = server$(async function(channel: Channel) {
   const { addYoutubeFavorite } = await import('~/server/db.server');
-  return await addYoutubeFavorite(video);
+  return await addYoutubeFavorite(channel);
 });
 
-const removeYoutubeFavorite$ = server$(async function(videoId: string) {
+const removeYoutubeFavorite$ = server$(async function(channelId: string) {
   const { removeYoutubeFavorite } = await import('~/server/db.server');
-  return await removeYoutubeFavorite(videoId);
+  return await removeYoutubeFavorite(channelId);
 });
 
 const searchYouTubeChannels = server$(async function(q: string): Promise<YouTubeVideo[]> {
@@ -64,12 +63,13 @@ export default component$(() => {
   const favorites  = useFavorites();
   const localFavorites = useSignal(favorites.value);
 
-  const isFavorite = (videoId: string) => {
-    return favorites.value.some((favorite) => favorite.videoId === videoId);
+  const isFavorite = (channelId: string) => {
+    return localFavorites.value.some((favorite) => favorite.channelId === channelId);
   };
 
-  const onAdd = $(async (video: Video) => {
-    const newFavorites = await addYoutubeFavorite$(video)
+  const onAdd = $(async (video: YouTubeVideo) => {
+    const newFavorites = await addYoutubeFavorite$({channelId: video.channelId, channelTitle: video.channelTitle,
+      thumbnail: video.thumbnails.default?.url || video.thumbnails.medium?.url || video.thumbnails.high?.url})
     localFavorites.value = newFavorites;
   })
 
@@ -93,11 +93,27 @@ export default component$(() => {
   return (
     <div class="max-w-md mx-auto p-4">
       <h1 class="text-2xl mb-4 text-brand-600">Youtube</h1>
-      <Link href="/youtube/UCDptIDyUZvphf_9FLfrDjBw" class="text-sm text-brand-600">Semonster</Link>
-      <p/>
-      <Link href="/youtube/UC4STOuaIY9iqh7Lzrq_EVYQ" class="text-sm text-brand-600">Alex White</Link>
-      <p/>
-      <Link href="/youtube/UCmdvAxEJ14EvXdASKbodj1Q" class="text-sm text-brand-600">David Parcerisa</Link>
+      {localFavorites.value.length > 0 && <h2 class="text-lg mb-2 text-brand-600">Favorites</h2>}
+      <ul>
+      {localFavorites.value.map((favorite) => (
+        <li key={favorite.channelId} class="p-2 mt-2">
+          <img 
+            width={100}
+            height={100}
+            src={favorite.thumbnail}
+            alt={favorite.channelTitle}
+            class="w-10 h-10 rounded"
+          />
+          <Link href={`/youtube/${favorite.channelId}`} class="text-sm text-brand-600">{favorite.channelTitle}</Link>
+          <button
+            class="bg-red-600 text-white px-2 py-1 rounded ml-2"
+            onClick$={() => onRemove(favorite.channelId)}
+          >
+            Remove
+          </button>
+        </li>  
+      ))}
+      </ul>
       <div class="flex gap-2 mb-4">
         {/*<YoutubeSearch onSelect$={handleSearch} />*/}
         <input type="text"
@@ -129,8 +145,8 @@ export default component$(() => {
                 />
               </Link>
                 <div class="">
-                  {isFavorite(video.videoId) ? 
-                  <span onClick$={$(() => onRemove(video.videoId))} class="text-sm text-brand-600 cursor-pointer">❤️</span> : 
+                  {isFavorite(video.channelId) ? 
+                  <span onClick$={$(() => onRemove(video.channelId))} class="text-sm text-brand-600 cursor-pointer">❤️</span> : 
                   <span onClick$={$(() => onAdd(video))} class="text-sm text-brand-600 cursor-pointer">🤍</span>}
                     <div class="font-bold text-brand-700">{video.title}</div>
                     <div class="text-xs text-brand-500">{video.description}</div>
