@@ -753,8 +753,8 @@ export const downloadYoutubeAudio = server$(function (
 });
 
 export const playLiveTwitch = server$(async function (channel: string) {
-  //const url = `http://app:3000/api/twitch/${channel}`;
-  const url = `http://192.168.1.44:5173/api/twitch/${channel}`;
+  const url = `http://app:3000/api/twitch/${channel}`;
+  //const url = `http://192.168.1.44:5173/api/twitch/${channel}`;
   await playUri(url);
   await play();
 });
