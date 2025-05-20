@@ -38,8 +38,8 @@ export default component$(( props : YoutubeVideoProps) => {
               </Link>
                 <div class="">
                   {props.isFavorite ? 
-                  <span onClick$={() => props.onAdd()} class="cursor-pointer">❤️</span> : 
-                  <span onClick$={() => props.onRemove()} class="cursor-pointer">🤍</span>}
+                  <button onClick$={() => props.onRemove()} class="cursor-pointer">❤️</button> : 
+                  <button onClick$={() => props.onAdd()} class="cursor-pointer">🤍</button>}
                     <div class="font-bold text-brand-700">{props.video.title}</div>
                     <div class="text-xs text-brand-500">{props.video.description}</div>
                 </div>
