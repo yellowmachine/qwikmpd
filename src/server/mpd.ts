@@ -362,21 +362,47 @@ export const list = server$(async function(path: string){
     return { directories: list.directory.map(d => d.directory).sort((a, b) => a > b ? 1 : -1), files: formatSongArray(list.file), file: list.file, currentSong: current?.title};
 })
 
-export interface MusicBrainzRelease {
-  id: string;
-  title: string;
-  status?: string;
-  "release-group"?: {
+
+export interface ReleaseGroupSearchResult {
+  "created": string; // Fecha de creación de la respuesta
+  "count": number;   // Total de resultados encontrados
+  "offset": number;  // Offset de la paginación
+  "release-groups": ReleaseGroup[]; // Array de release groups
+}
+
+export interface ReleaseGroup {
+  "id": string; // MBID del release group
+  "title": string;
+  "primary-type": string; // Ej: "Album", "Single", etc.
+  "secondary-types"?: string[]; // Opcional, ej: ["Compilation"]
+  "first-release-date"?: string; // Opcional, ej: "1997-05-21"
+  "artist-credit": ArtistCredit[];
+  "disambiguation"?: string; // Opcional, texto para diferenciar
+  // ...otros campos opcionales según la respuesta
+}
+
+export interface ReleaseSearchResult {
+  created: string;      // Fecha de la respuesta (ISO string)
+  count: number;        // Total de resultados encontrados
+  offset: number;       // Offset de paginación
+  releases: Release[];  // Array de releases encontrados
+}
+
+export interface Release {
+  id: string;                   // MBID del release
+  title: string;                // Título de la edición
+  status?: string;              // Ej: "Official", "Promotion", etc.
+  "release-group": {
     id: string;
     title: string;
-    "primary-type"?: string;
-    "secondary-types"?: string[];
+    // ...otros campos opcionales
   };
-  date?: string;
-  country?: string;
   "artist-credit": ArtistCredit[];
-  media: Medium[];
-  // Puedes añadir más campos según lo que necesites
+  date?: string;                // Fecha de lanzamiento (ej: "1997-05-21")
+  country?: string;             // Código de país (ej: "US", "GB")
+  "track-count"?: number;       // Número de tracks
+  "media"?: Media[];            // Información de discos/formato
+  // ...otros campos opcionales según la respuesta
 }
 
 export interface ArtistCredit {
@@ -384,68 +410,76 @@ export interface ArtistCredit {
     id: string;
     name: string;
     "sort-name": string;
+    // ...otros campos opcionales
   };
+  name?: string;
+  joinphrase?: string;
 }
 
-export interface Medium {
-  format?: string;
-  position?: number;
-  "track-count": number;
-  tracks: Track[];
-}
-
-export interface Track {
-  id: string;
-  number: string;
-  title: string;
-  length?: number;
-  recording: {
+export interface ReleaseDetail {
+  id: string;                  // MBID del release
+  title: string;               // Título de la edición
+  status?: string;             // Ej: "Official"
+  "release-group"?: {
     id: string;
     title: string;
-    length?: number;
-    // Otros campos posibles
+    // ...otros campos opcionales
   };
-}
-
-
-export interface MusicBrainzReleaseGroupResponse {
-  created: string;
-  count: number;
-  offset: number;
-  'release-groups': ReleaseGroup[];
-}
-
-export interface ReleaseGroup {
-  id: string; // este es el id para la segunda busqueda
-  type?: string;
-  title: string;
-  'first-release-date'?: string;
-  'artist-credit': ArtistCredit[];
-  // Puedes añadir más campos según lo que necesites
+  "artist-credit": ArtistCredit[];
+  date?: string;               // Fecha de lanzamiento
+  country?: string;            // Código de país
+  "track-count"?: number;      // Número total de tracks
+  media: Media[];              // Array de medios (CD, vinilo, digital, etc.)
+  // ...otros campos opcionales
 }
 
 export interface ArtistCredit {
   artist: {
     id: string;
     name: string;
-    'sort-name': string;
+    "sort-name": string;
+    // ...otros campos opcionales
   };
+  name?: string;
+  joinphrase?: string;
+}
+
+export interface Media {
+  format?: string;             // Ej: "CD", "Vinyl", "Digital Media"
+  position?: number;           // Número de disco (1 para el primer CD, etc.)
+  "track-count": number;       // Número de tracks en este disco
+  tracks: Track[];             // Array de tracks en este medio
+  // ...otros campos opcionales
+}
+
+export interface Track {
+  id: string;                  // MBID de la grabación
+  title: string;               // Título del track
+  length?: number;             // Duración en milisegundos
+  position: number;            // Número de track en el disco
+  number: string;              // Número de track como string
+  recording: {
+    id: string;
+    title: string;
+    length?: number;
+    // ...otros campos opcionales
+  };
+  // ...otros campos opcionales
 }
 
 
 function findBestFuzzyMatch(trackTitle: string, tracks: { title: string }[]) {
     const titles = tracks.map(t => t.title);
     const result = fuzzball.extract(trackTitle, titles, { scorer: fuzzball.ratio, returnObjects: true, limit: 1 })[0];
-    if (result && result.score > 80) { // Ajusta el umbral según tu caso
+    if (result && result.score > 50) { // Ajusta el umbral según tu caso
         return tracks.find(t => t.title === result.choice);
     }
     return undefined;
 }
 
-async function tagAlbumFromJson( albumData: MusicBrainzRelease, musicFolder: string) {
+async function tagAlbum( albumArtist: string, albumData: ReleaseDetail, musicFolder: string) {
 
     const albumTitle = albumData.title;
-    const albumArtist = albumData["artist-credit"][0].artist.name;
     const albumDate = albumData.date || "";
 
     const tracks: Track[] = [];
@@ -457,7 +491,6 @@ async function tagAlbumFromJson( albumData: MusicBrainzRelease, musicFolder: str
 
     const files = await fs.readdir(musicFolder);
     for (const filename of files) {
-        if (!filename.toLowerCase().endsWith(".flac")) continue;
 
         const filepath = path.join(musicFolder, filename);
         const trackTitle = findBestFuzzyMatch(filename, tracks);
@@ -470,21 +503,20 @@ async function tagAlbumFromJson( albumData: MusicBrainzRelease, musicFolder: str
             continue;
         }
 
-        const command = [
-          "kid3-cli",
+        const args = [
           `-c 'set artist "${albumArtist}"'`,
           `-c 'set album "${albumTitle}"'`,
           `-c 'set title "${trackInfo.title}"'`,
           `-c 'set tracknumber "${trackInfo.number}"'`,
           `-c 'set date "${albumDate}"'`,
           `"${filepath}"`
-        ].join(" ");
+        ];
 
-        await executeCommand(command, []);
+        await executeCommand("kid3-cli", args);
     }
 }
 
-export async function searchAlbums(artist: string, album: string, limit: number = 5) {
+export async function searchGroups(artist: string, album: string, limit: number = 5) {
     const query = `artist:"${artist}" AND release:"${album}"`;
     const url = `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(query)}&fmt=json&limit=${limit}`;
 
@@ -498,12 +530,12 @@ export async function searchAlbums(artist: string, album: string, limit: number 
         throw new Error(`MusicBrainz API error: ${response.status} ${response.statusText}`);
     }
 
-    const data: MusicBrainzReleaseGroupResponse = await response.json();
+    const data: ReleaseGroupSearchResult = await response.json();
     return data['release-groups'];
 }
 
-async function searchAlbum(releaseGroupId: string) {
-    const url = `https://musicbrainz.org/ws/2/release?release-group=${releaseGroupId}&fmt=json`;
+export async function searchGroupReleases(releaseGroupId: string, limit: number = 5) {
+    const url = `https://musicbrainz.org/ws/2/release?release-group=${releaseGroupId}&fmt=json&limit=${limit}`;
 
     const response = await fetch(url, {
         headers: {
@@ -515,21 +547,36 @@ async function searchAlbum(releaseGroupId: string) {
         throw new Error(`MusicBrainz API error: ${response.status} ${response.statusText}`);
     }
 
-    const data: MusicBrainzRelease = await response.json();
+    const data: ReleaseSearchResult = await response.json();
+    return data['releases'];
+}
+
+export async function searchRelease(releaseId: string) {
+    const url = `https://musicbrainz.org/ws/2/release/${releaseId}?fmt=json&inc=recordings`
+
+    const response = await fetch(url, {
+        headers: {
+            "User-Agent": "YourAppName/1.0 (your@email.com)"
+        }
+    });
+
+    if (!response.ok) {
+      throw new ServerError(500, 'Error al consultar la API de MusicBrainz');
+    }
+
+    const data: ReleaseDetail = await response.json();
     return data;
 }
 
-export const tag = server$(async function({folderTag, releaseGroupId}: {folderTag: string, releaseGroupId: string}){
+export const tag = server$(async function({folderTag, releaseId, artist}: {folderTag: string, artist: string, releaseId: string}){
   const completeFolderTag = process.env.NODE_ENV === 'development' ? path.join('./music', folderTag) : path.join('/app/music', folderTag)
-  const album = (await searchAlbum(releaseGroupId));
-  await tagAlbumFromJson(album, completeFolderTag);
+  const album = await searchRelease(releaseId);
+  await tagAlbum(artist,  album, completeFolderTag);
 })
 
-export const tagFirst = server$(async function({folderTag, artist, album}: {folderTag: string, artist: string, album: string}){
-  const completeFolderTag = process.env.NODE_ENV === 'development' ? path.join('./music', folderTag) : path.join('/app/music', folderTag)
-  const albums = await searchAlbums(artist, album);
-  const releaseGroupId = albums[0].id;
-  await tagAlbumFromJson((await searchAlbum(releaseGroupId)), completeFolderTag);
+export const tagOptions = server$(async function({artist, album}: {artist: string, album: string}){
+  const groups = await searchGroups(artist, album);
+  return groups
 })
 
 export const listPlaylist = server$(async function(){
