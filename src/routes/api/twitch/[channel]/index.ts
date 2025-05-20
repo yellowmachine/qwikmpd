@@ -28,48 +28,48 @@ export const onGet: RequestHandler = async (event) => {
   const writer = writableStream.getWriter();
 
   // ffmpeg process
-  const ffmpeg = spawn('ffmpeg', [
-    '-i', hlsUrl,
-    '-loglevel', 'error', // o 'quiet'
-    '-vn',
-    '-acodec', 'libmp3lame',
-    '-ar', '44100',
-    '-ac', '2',
-    '-f', 'mp3',
-    'pipe:1'
-  ]);
+  await new Promise<void>((resolve, reject) => {
+    const ffmpeg = spawn('ffmpeg', [
+      '-i', hlsUrl,
+      '-loglevel', 'error', // o 'quiet'
+      '-vn',
+      '-acodec', 'libmp3lame',
+      '-ar', '44100',
+      '-ac', '2',
+      '-f', 'mp3',
+      'pipe:1'
+    ]);
 
-  // Escribir los datos de ffmpeg en el writer de la web stream
-  ffmpeg.stdout.on('data', async (chunk: Buffer) => {
-    // Espera a que el chunk se escriba antes de continuar
-    await writer.write(new Uint8Array(chunk));
-  });
+    // Escribir los datos de ffmpeg en el writer de la web stream
+    ffmpeg.stdout.on('data', async (chunk: Buffer) => {
+      // Espera a que el chunk se escriba antes de continuar
+      await writer.write(new Uint8Array(chunk));
+    });
 
-  ffmpeg.on('error', (err) => {
-    console.error('Error en ffmpeg:', err);
-    writer.abort(err); // Cierra el writer con error
-  });
+    ffmpeg.on('error', (err) => {
+      console.error('Error en ffmpeg:', err);
+      writer.abort(err); // Cierra el writer con error
+      reject(err);
+    });
 
-  ffmpeg.stdout.on('end', () => {
-    writer.close();
-  });
+    ffmpeg.stderr.on('data', (data) => {
+      // Opcional: logging de errores de ffmpeg
+      console.error(data.toString());
+    });
 
-  ffmpeg.stderr.on('data', (data) => {
-    // Opcional: logging de errores de ffmpeg
-    console.error(data.toString());
-  });
+    ffmpeg.on('close', (code) => {
+      if (code !== 0) {
+        console.error(`ffmpeg finalizado con código ${code}`);
+        writer.abort(new Error(`ffmpeg exited with code ${code}`));
+      } else {
+        writer.close();
+        resolve();
+      }
+    });
 
-  ffmpeg.on('close', (code) => {
-    if (code !== 0) {
-      console.error(`ffmpeg finalizado con código ${code}`);
-      writer.abort(new Error(`ffmpeg exited with code ${code}`));
-    } else {
-      writer.close();
-    }
-  });
-
-  // Si el cliente cierra la conexión, matar ffmpeg
-  (writableStream as any).closed?.then(() => {
-    ffmpeg.kill('SIGINT');
+    // Si el cliente cierra la conexión, matar ffmpeg
+    (writableStream as any).closed?.then(() => {
+      ffmpeg.kill('SIGINT');
+    });
   });
 };
