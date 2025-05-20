@@ -8,14 +8,19 @@ export const onGet: RequestHandler = async (event) => {
   let hlsUrl: string;
   try {
     hlsUrl = execSync(`yt-dlp -g https://www.twitch.tv/${channel}`, { encoding: 'utf-8' }).trim();
-    
     if (!hlsUrl.startsWith('http')) throw new Error('URL inválida');
-  } catch (err) {
-    event.text(500, 'No se pudo obtener el stream de Twitch');
+  } catch (err: any) {
+    // Si el canal no existe, yt-dlp devuelve un error específico
+    if (err.message.includes('Unable to extract channel id')) {
+      event.text(404, 'Canal no encontrado');
+    } else {
+      event.text(500, 'No se pudo obtener el stream de Twitch');
+    }
     return;
   }
 
   // 2. Lanzar ffmpeg y exponer el audio como stream HTTP
+  event.status(200); 
   event.headers.set('Content-Type', 'audio/mpeg');
   event.headers.set('Transfer-Encoding', 'chunked');
 
@@ -40,6 +45,11 @@ export const onGet: RequestHandler = async (event) => {
     await writer.write(new Uint8Array(chunk));
   });
 
+  ffmpeg.on('error', (err) => {
+    console.error('Error en ffmpeg:', err);
+    writer.abort(err); // Cierra el writer con error
+  });
+
   ffmpeg.stdout.on('end', () => {
     writer.close();
   });
@@ -47,6 +57,15 @@ export const onGet: RequestHandler = async (event) => {
   ffmpeg.stderr.on('data', (data) => {
     // Opcional: logging de errores de ffmpeg
     console.error(data.toString());
+  });
+
+  ffmpeg.on('close', (code) => {
+    if (code !== 0) {
+      console.error(`ffmpeg finalizado con código ${code}`);
+      writer.abort(new Error(`ffmpeg exited with code ${code}`));
+    } else {
+      writer.close();
+    }
   });
 
   // Si el cliente cierra la conexión, matar ffmpeg
