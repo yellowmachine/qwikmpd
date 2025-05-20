@@ -9,8 +9,7 @@ import type { StatusData, LsInfo, AudioFile } from '~/lib/types';
 import { spawn } from "child_process";
 import fs from 'fs/promises';
 import path from 'node:path';
-import meta from '~/components/action-button/action-button.stories';
-
+import * as fuzzball from "fuzzball";
 
 export const execCommand = server$(async (cmd: string) => {
   const { exec } = await import('child_process');
@@ -363,6 +362,221 @@ export const list = server$(async function(path: string){
     return { directories: list.directory.map(d => d.directory).sort((a, b) => a > b ? 1 : -1), files: formatSongArray(list.file), file: list.file, currentSong: current?.title};
 })
 
+
+export interface ReleaseGroupSearchResult {
+  "created": string; // Fecha de creación de la respuesta
+  "count": number;   // Total de resultados encontrados
+  "offset": number;  // Offset de la paginación
+  "release-groups": ReleaseGroup[]; // Array de release groups
+}
+
+export interface ReleaseGroup {
+  "id": string; // MBID del release group
+  "title": string;
+  "primary-type": string; // Ej: "Album", "Single", etc.
+  "secondary-types"?: string[]; // Opcional, ej: ["Compilation"]
+  "first-release-date"?: string; // Opcional, ej: "1997-05-21"
+  "artist-credit": ArtistCredit[];
+  "disambiguation"?: string; // Opcional, texto para diferenciar
+  // ...otros campos opcionales según la respuesta
+}
+
+export interface ReleaseSearchResult {
+  created: string;      // Fecha de la respuesta (ISO string)
+  count: number;        // Total de resultados encontrados
+  offset: number;       // Offset de paginación
+  releases: Release[];  // Array de releases encontrados
+}
+
+export interface Release {
+  id: string;                   // MBID del release
+  title: string;                // Título de la edición
+  status?: string;              // Ej: "Official", "Promotion", etc.
+  "release-group": {
+    id: string;
+    title: string;
+    // ...otros campos opcionales
+  };
+  "artist-credit": ArtistCredit[];
+  date?: string;                // Fecha de lanzamiento (ej: "1997-05-21")
+  country?: string;             // Código de país (ej: "US", "GB")
+  "track-count"?: number;       // Número de tracks
+  "media"?: Media[];            // Información de discos/formato
+  // ...otros campos opcionales según la respuesta
+}
+
+export interface ArtistCredit {
+  artist: {
+    id: string;
+    name: string;
+    "sort-name": string;
+    // ...otros campos opcionales
+  };
+  name?: string;
+  joinphrase?: string;
+}
+
+export interface ReleaseDetail {
+  id: string;                  // MBID del release
+  title: string;               // Título de la edición
+  status?: string;             // Ej: "Official"
+  "release-group"?: {
+    id: string;
+    title: string;
+    // ...otros campos opcionales
+  };
+  "artist-credit": ArtistCredit[];
+  date?: string;               // Fecha de lanzamiento
+  country?: string;            // Código de país
+  "track-count"?: number;      // Número total de tracks
+  media: Media[];              // Array de medios (CD, vinilo, digital, etc.)
+  // ...otros campos opcionales
+}
+
+export interface ArtistCredit {
+  artist: {
+    id: string;
+    name: string;
+    "sort-name": string;
+    // ...otros campos opcionales
+  };
+  name?: string;
+  joinphrase?: string;
+}
+
+export interface Media {
+  format?: string;             // Ej: "CD", "Vinyl", "Digital Media"
+  position?: number;           // Número de disco (1 para el primer CD, etc.)
+  "track-count": number;       // Número de tracks en este disco
+  tracks: Track[];             // Array de tracks en este medio
+  // ...otros campos opcionales
+}
+
+export interface Track {
+  id: string;                  // MBID de la grabación
+  title: string;               // Título del track
+  length?: number;             // Duración en milisegundos
+  position: number;            // Número de track en el disco
+  number: string;              // Número de track como string
+  recording: {
+    id: string;
+    title: string;
+    length?: number;
+    // ...otros campos opcionales
+  };
+  // ...otros campos opcionales
+}
+
+
+function findBestFuzzyMatch(trackTitle: string, tracks: Track[]) {
+    const titles = tracks.map(t => t.title);
+    const result = fuzzball.extract(trackTitle, titles, { scorer: fuzzball.ratio, returnObjects: true, limit: 1 })[0];
+    
+    if (result && result.score > 40) { 
+        return tracks.find(t => t.title === result.choice);
+    }
+    return undefined;
+}
+
+async function tagAlbum( albumArtist: string, albumData: ReleaseDetail, musicFolder: string) {
+
+    const albumTitle = albumData.title;
+    const albumDate = albumData.date || "";
+
+    const tracks: Track[] = [];
+    for (const medium of albumData.media) {
+        for (const track of medium.tracks) {
+            tracks.push(track);
+        }
+    }
+
+    const files = await fs.readdir(musicFolder);
+    for (const filename of files) {
+
+        const filepath = path.join(musicFolder, filename);
+        const trackInfo = findBestFuzzyMatch(filename, tracks);
+
+        if (!trackInfo) {
+            console.log(`* No match for ${filename}`);
+            continue;
+        }
+
+        const args = [
+          "-c", `set artist "${albumArtist}"`,
+          "-c", `set album "${albumTitle}"`,
+          "-c", `set title "${trackInfo.title}"`,
+          "-c", `set tracknumber "${trackInfo.number}"`,
+          "-c", `set date "${albumDate}"`,
+          filepath
+        ];
+
+        await executeCommand("kid3-cli", args);
+    }
+}
+
+export async function searchGroups(artist: string, album: string, limit: number = 5) {
+    const query = `artist:"${artist}" AND release:"${album}"`;
+    const url = `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(query)}&fmt=json&limit=${limit}`;
+
+    const response = await fetch(url, {
+        headers: {
+            "User-Agent": "YourAppName/1.0 (your@email.com)"
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`MusicBrainz API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data: ReleaseGroupSearchResult = await response.json();
+    return data['release-groups'];
+}
+
+export async function searchGroupReleases(releaseGroupId: string, limit: number = 5) {
+    const url = `https://musicbrainz.org/ws/2/release?release-group=${releaseGroupId}&fmt=json&limit=${limit}`;
+
+    const response = await fetch(url, {
+        headers: {
+            "User-Agent": "YourAppName/1.0 (your@email.com)"
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`MusicBrainz API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data: ReleaseSearchResult = await response.json();
+    return data['releases'];
+}
+
+export async function searchRelease(releaseId: string) {
+    const url = `https://musicbrainz.org/ws/2/release/${releaseId}?fmt=json&inc=recordings`
+
+    const response = await fetch(url, {
+        headers: {
+            "User-Agent": "YourAppName/1.0 (your@email.com)"
+        }
+    });
+
+    if (!response.ok) {
+      throw new ServerError(500, 'Error al consultar la API de MusicBrainz');
+    }
+
+    const data: ReleaseDetail = await response.json();
+    return data;
+}
+
+export const tag = server$(async function({folderTag, releaseId, artist}: {folderTag: string, artist: string, releaseId: string}){
+  const completeFolderTag = process.env.NODE_ENV === 'development' ? path.join('./music', folderTag) : path.join('/app/music', folderTag)
+  const album = await searchRelease(releaseId);
+  await tagAlbum(artist,  album, completeFolderTag);
+})
+
+export const tagOptions = server$(async function({artist, album}: {artist: string, album: string}){
+  const groups = await searchGroups(artist, album);
+  return groups
+})
+
 export const listPlaylist = server$(async function(){
     const client = await getMpdClient(this);
     const list = await client?.api.playlists.get();
@@ -540,10 +754,32 @@ export const downloadYoutubeAudio = server$(function (
 
 export const playLiveTwitch = server$(async function (channel: string) {
   const url = `http://app:3000/api/twitch/${channel}`;
-  //const url = `http://192.168.1.44:4173/api/twitch/${channel}`;
   await playUri(url);
   await play();
 });
+
+export const executeCommand = server$(function (command: string, opts: string[]) {
+
+  const cmd = spawn(command, opts);
+
+  cmd.stdout.on("data", (data) => {
+    updateLog("stdout", `[${command.toUpperCase()}] ${data.toString()}`);
+  });
+
+  cmd.stderr.on("data", (data) => {
+    updateLog("stderr", `[${command.toUpperCase()}] ${data.toString()}`);
+  });
+
+  cmd.on("close", (code) => {
+    updateLog("stdout", `[${command.toUpperCase()}] Proceso finalizado con código ${code}\n`);
+  });
+
+  cmd.on('error', (err) => {
+    console.error(`Error en ${command}:`, err);
+    updateLog("stderr", `[${command.toUpperCase()}] Error: ${err.message}`);
+  });
+});
+
 
 export const executeSSHCommand = server$(function (command: 'shutdown' | 'reboot') {
   const host = this.env.get('SSH_HOST') || 'raspberry.casa';
@@ -666,27 +902,14 @@ export type YouTubeSearchItem = {
   };
 };
 
-export type MappedYouTubeVideo = {
-  videoId: string;
-  title: string;
-  description: string;
-  publishedAt: string;
-  thumbnails: {
-    default?: { url: string; width: number; height: number };
-    medium?: { url: string; width: number; height: number };
-    high?: { url: string; width: number; height: number };
-    standard?: { url: string; width: number; height: number };
-    maxres?: { url: string; width: number; height: number };
-  };
-  channelTitle: string;
-};
+//import type { YoutubeVideo } from '~/server/youtube';
 
 export const generateM3U = server$(async (metadata: {videoId: string, title: string, channelTitle: string}) => {
   const videoUrl = `https://www.youtube.com/watch?v=${metadata.videoId}`;
   await generateTmpStream(videoUrl, metadata);
 });
 
-export const getChannelVideos = server$(async function(channelId: string): Promise<MappedYouTubeVideo[]> {
+export const getChannelVideos = server$(async function(channelId: string): Promise<YoutubeVideo[]> {
   const url = `https://www.googleapis.com/youtube/v3/search?key=${this.env.get('YOUTUBE_API_KEY')}&channelId=${channelId}&part=snippet&order=date&maxResults=10&type=video`;
 
   const response = await fetch(url);
@@ -694,15 +917,7 @@ export const getChannelVideos = server$(async function(channelId: string): Promi
     console.log(`Error al consultar la API: ${response.status} ${response.statusText}`);
     return [];
   }
-  const data = await response.json();
-  return data.items.map( (item: YouTubeSearchItem) => ({
-    videoId: item.id.videoId,
-    title: item.snippet.title,
-    description: item.snippet.description,
-    publishedAt: item.snippet.publishedAt,
-    thumbnails: item.snippet.thumbnails,
-    channelTitle: item.snippet.channelTitle,
-  }));
+  return (await response.json()).items.map( (item: {snippet: YoutubeVideo}) => ({...item.snippet})) as YoutubeVideo[];
 })
 
 export const getChannelIdFromVideo = server$(async function(videoId: string) {
@@ -710,7 +925,7 @@ export const getChannelIdFromVideo = server$(async function(videoId: string) {
   const url = `https://www.googleapis.com/youtube/v3/videos?key=${apiKey}&id=${videoId}&part=snippet`;
 
   const response = await fetch(url);
-  if (!response.ok) throw new Error('Error al consultar la API de YouTube');
+  if (!response.ok) throw new Error('Error al consultar la API de Youtube');
   const data = await response.json();
 
   if (!data.items || data.items.length === 0) {
@@ -758,3 +973,39 @@ export const emptyStatus: StatusData = {
     
 } as StatusData;
   
+export type Channel = {
+  channelId: string;
+  channelTitle: string;
+  thumbnail?: string;  
+}
+
+export type YoutubeVideo = {
+  thumbnails: {
+    default: {
+      url: string;
+    };
+    medium: {
+      url: string;
+    };
+    high: {
+      url: string;
+    };
+  };
+  channelId: string;
+  channelTitle: string;
+  tittle: string;
+  description: string;
+  title: string;
+  videoId: string;
+};
+
+
+export const addYoutubeFavorite$ = server$(async function(channel: Channel) {
+  const { addYoutubeFavorite } = await import('~/server/db.server');
+  return await addYoutubeFavorite(channel);
+});
+
+export const removeYoutubeFavorite$ = server$(async function(channelId: string) {
+  const { removeYoutubeFavorite } = await import('~/server/db.server');
+  return await removeYoutubeFavorite(channelId);
+});

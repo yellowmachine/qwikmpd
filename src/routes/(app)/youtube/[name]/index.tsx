@@ -1,9 +1,31 @@
-import { component$ } from '@builder.io/qwik';
-import { getChannelVideos, generateM3U } from '~/server/mpd';
-import { routeLoader$ } from '@builder.io/qwik-city';
+import { $, component$, useSignal } from '@builder.io/qwik';
+import { getChannelVideos } from '~/server/mpd';
+import { routeLoader$, server$ } from '@builder.io/qwik-city';
+import YoutubeVideo from '~/components/youtube/YoutubeVideo';
+import { 
+  useFavorites, 
+  type Channel,
+  //addYoutubeFavorite$, 
+  type YoutubeVideo as YT,
+  //removeYoutubeFavorite$ 
+} from '~/server/youtube';
+
+
+const addYoutubeFavorite$ = server$(async function(channel: Channel) {
+  const { addYoutubeFavorite } = await import('~/server/db.server');
+  return await addYoutubeFavorite(channel);
+});
+
+const removeYoutubeFavorite$ = server$(async function(channelId: string) {
+  const { removeYoutubeFavorite } = await import('~/server/db.server');
+  return await removeYoutubeFavorite(channelId);
+});
+
+export {useFavorites} from '~/server/youtube'
 
 export const useVideos = routeLoader$(async (event) => {
-  const channelId = event.params.name || 'TU_CHANNEL_ID_POR_DEFECTO';
+  
+  const channelId = event.params.name;
   
   if(!channelId)
     return []
@@ -12,44 +34,45 @@ export const useVideos = routeLoader$(async (event) => {
 
 
 export default component$(() => {
-   
+  const favorites  = useFavorites(); 
   const videos = useVideos();
+  const localFavorites = useSignal(favorites.value);
+
+  const isFavorite = (channelId: string) => {
+    return localFavorites.value.some((favorite) => favorite.channelId === channelId);
+  };
+
+  const onAdd = $(async (video: YT) => {
+    const newFavorites = await addYoutubeFavorite$({
+      channelId: video.channelId, 
+      channelTitle: video.channelTitle, 
+      thumbnail: video.thumbnails.default.url
+    });
+    localFavorites.value = newFavorites;
+  })
+
+  const onRemove = $(async (channelId: string) => {
+    const newFavorites = await removeYoutubeFavorite$(channelId)
+    localFavorites.value = newFavorites;
+  })
 
   return (
     <div>
       <h1 class="text-3xl text-brand-300 mb-4">Last videos</h1>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-            {videos.value.map((video) => (
-              <div class="border border-2 border-brand-300 rounded-md p-4"
-                key={video.videoId}
-                
-              >
-                <a href={`https://www.youtube.com/watch?v=${video.videoId}`} target="_blank" rel="noopener noreferrer">
-                  <img
-                    width={200}
-                    height={100}
-                    src={video.thumbnails.medium?.url || video.thumbnails.default?.url}
-                    alt={video.title}
-                    style={{ width: '100%', borderRadius: '6px' }}
-                  />
-                </a>
-                <h3 style={{ fontSize: '1rem', margin: '0.5rem 0' }}>
-                  {video.title}
-                </h3>
-                <p style={{ fontSize: '0.9rem', color: '#555' }}>
-                  {new Date(video.publishedAt).toLocaleDateString()}
-                </p>
-                <a class="bg-blue-600 text-white px-6 py-2 rounded mt-4 mr-4" 
-                   href={`https://www.youtube.com/watch?v=${video.videoId}`} 
-                   target="_blank" 
-                   rel="noopener noreferrer">
-                      Watch on YouTube
-                </a>
-                <button class="bg-brand-600 text-white px-6 py-2 rounded mt-4" 
-                  onClick$={() => generateM3U({videoId: video.videoId, title: video.title, channelTitle: video.channelTitle})}>Stream here!</button>
-              </div>
-            ))}
-          </div>
+          {videos.value.map((video) => (
+            <div class="border border-2 border-brand-300 rounded-md p-4"
+              key={video.videoId}
+            >
+              <YoutubeVideo 
+                video={video}
+                onAdd={$(() => onAdd(video))}
+                onRemove={$(() => onRemove(video.channelId))}
+                isFavorite={isFavorite(video.channelId)} 
+              />
+            </div>
+          ))}
+      </div>
     </div>
   );
 });
