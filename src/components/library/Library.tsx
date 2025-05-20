@@ -1,5 +1,5 @@
 import { $, component$, useSignal } from "@builder.io/qwik";
-import { list, update } from "#mpd";
+import { list, update, tagFirst } from "#mpd";
 import { SongList } from "../song/SongList";
 import type { Song } from '~/lib/types';
 import PlayHere from "../player/PlayHere";
@@ -37,6 +37,9 @@ export const Library = component$(({initialData, currentSong}: LibraryProps) => 
     const showModal = useSignal(false);
     const urlInput = useSignal('');
     const navigate = useNavigate();
+    const artist = useSignal('');
+    const album = useSignal('');
+    //const albums = useSignal<{id: String, 'artist-credit': ArtistCredit[], title: string}[]>([]);
 
     const openModal = $(() => {
         urlInput.value = '';
@@ -58,6 +61,15 @@ export const Library = component$(({initialData, currentSong}: LibraryProps) => 
         closeModal();
     });
 
+    //const getReleaseId = $(async () => {
+    //    albums.value = await searchAlbums(artist.value, album.value);
+   // })
+
+    const tagHere = $(async () => {
+        const folder = await currentFolder();
+        await tagFirst({folderTag: folder, artist: artist.value, album: album.value});
+        await loadAndRefresh$();
+    })
 
     const goPath$ = $(async (path: string) => {
         const result = await loadPath(path);
@@ -101,6 +113,19 @@ export const Library = component$(({initialData, currentSong}: LibraryProps) => 
                     <ActionButton action={$(() => updateLibrary())} successMessage="ok">
                     <button class="mb-2 cursor-pointer bg-brand-300 hover:bg-brand-300 p-2 rounded text-brand-500 text-xl ml-2">
                         Update database
+                    </button>
+                    </ActionButton>
+                    <input type="text" value={artist.value} onInput$={$((e) => {
+                        const target = e.target as HTMLInputElement;
+                        artist.value = target.value;
+                    })} />
+                    <input type="text" value={album.value} onInput$={$((e) => {
+                        const target = e.target as HTMLInputElement;
+                        album.value = target.value;
+                    })}/>
+                    <ActionButton action={$(() => tagHere())} successMessage="ok">
+                    <button class="mb-2 cursor-pointer bg-yellow-300 hover:bg-yellow-300 p-2 rounded text-white text-xl ml-2">
+                        Tag here
                     </button>
                     </ActionButton>
                 </h1>

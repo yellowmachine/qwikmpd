@@ -9,8 +9,7 @@ import type { StatusData, LsInfo, AudioFile } from '~/lib/types';
 import { spawn } from "child_process";
 import fs from 'fs/promises';
 import path from 'node:path';
-import meta from '~/components/action-button/action-button.stories';
-
+import * as fuzzball from "fuzzball";
 
 export const execCommand = server$(async (cmd: string) => {
   const { exec } = await import('child_process');
@@ -363,6 +362,176 @@ export const list = server$(async function(path: string){
     return { directories: list.directory.map(d => d.directory).sort((a, b) => a > b ? 1 : -1), files: formatSongArray(list.file), file: list.file, currentSong: current?.title};
 })
 
+export interface MusicBrainzRelease {
+  id: string;
+  title: string;
+  status?: string;
+  "release-group"?: {
+    id: string;
+    title: string;
+    "primary-type"?: string;
+    "secondary-types"?: string[];
+  };
+  date?: string;
+  country?: string;
+  "artist-credit": ArtistCredit[];
+  media: Medium[];
+  // Puedes añadir más campos según lo que necesites
+}
+
+export interface ArtistCredit {
+  artist: {
+    id: string;
+    name: string;
+    "sort-name": string;
+  };
+}
+
+export interface Medium {
+  format?: string;
+  position?: number;
+  "track-count": number;
+  tracks: Track[];
+}
+
+export interface Track {
+  id: string;
+  number: string;
+  title: string;
+  length?: number;
+  recording: {
+    id: string;
+    title: string;
+    length?: number;
+    // Otros campos posibles
+  };
+}
+
+
+export interface MusicBrainzReleaseGroupResponse {
+  created: string;
+  count: number;
+  offset: number;
+  'release-groups': ReleaseGroup[];
+}
+
+export interface ReleaseGroup {
+  id: string; // este es el id para la segunda busqueda
+  type?: string;
+  title: string;
+  'first-release-date'?: string;
+  'artist-credit': ArtistCredit[];
+  // Puedes añadir más campos según lo que necesites
+}
+
+export interface ArtistCredit {
+  artist: {
+    id: string;
+    name: string;
+    'sort-name': string;
+  };
+}
+
+
+function findBestFuzzyMatch(trackTitle: string, tracks: { title: string }[]) {
+    const titles = tracks.map(t => t.title);
+    const result = fuzzball.extract(trackTitle, titles, { scorer: fuzzball.ratio, returnObjects: true, limit: 1 })[0];
+    if (result && result.score > 80) { // Ajusta el umbral según tu caso
+        return tracks.find(t => t.title === result.choice);
+    }
+    return undefined;
+}
+
+async function tagAlbumFromJson( albumData: MusicBrainzRelease, musicFolder: string) {
+
+    const albumTitle = albumData.title;
+    const albumArtist = albumData["artist-credit"][0].artist.name;
+    const albumDate = albumData.date || "";
+
+    const tracks: Track[] = [];
+    for (const medium of albumData.media) {
+        for (const track of medium.tracks) {
+            tracks.push(track);
+        }
+    }
+
+    const files = await fs.readdir(musicFolder);
+    for (const filename of files) {
+        if (!filename.toLowerCase().endsWith(".flac")) continue;
+
+        const filepath = path.join(musicFolder, filename);
+        const trackTitle = findBestFuzzyMatch(filename, tracks);
+
+        const trackInfo = tracks.find(
+            t => t.title.toLowerCase() === trackTitle?.title.toLowerCase()
+        );
+        if (!trackInfo) {
+            console.log(`No match for ${filename}`);
+            continue;
+        }
+
+        const command = [
+          "kid3-cli",
+          `-c 'set artist "${albumArtist}"'`,
+          `-c 'set album "${albumTitle}"'`,
+          `-c 'set title "${trackInfo.title}"'`,
+          `-c 'set tracknumber "${trackInfo.number}"'`,
+          `-c 'set date "${albumDate}"'`,
+          `"${filepath}"`
+        ].join(" ");
+
+        await executeCommand(command, []);
+    }
+}
+
+export async function searchAlbums(artist: string, album: string, limit: number = 5) {
+    const query = `artist:"${artist}" AND release:"${album}"`;
+    const url = `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(query)}&fmt=json&limit=${limit}`;
+
+    const response = await fetch(url, {
+        headers: {
+            "User-Agent": "YourAppName/1.0 (your@email.com)"
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`MusicBrainz API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data: MusicBrainzReleaseGroupResponse = await response.json();
+    return data['release-groups'];
+}
+
+async function searchAlbum(releaseGroupId: string) {
+    const url = `https://musicbrainz.org/ws/2/release?release-group=${releaseGroupId}&fmt=json`;
+
+    const response = await fetch(url, {
+        headers: {
+            "User-Agent": "YourAppName/1.0 (your@email.com)"
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`MusicBrainz API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data: MusicBrainzRelease = await response.json();
+    return data;
+}
+
+export const tag = server$(async function({folderTag, releaseGroupId}: {folderTag: string, releaseGroupId: string}){
+  const completeFolderTag = process.env.NODE_ENV === 'development' ? path.join('./music', folderTag) : path.join('/app/music', folderTag)
+  const album = (await searchAlbum(releaseGroupId));
+  await tagAlbumFromJson(album, completeFolderTag);
+})
+
+export const tagFirst = server$(async function({folderTag, artist, album}: {folderTag: string, artist: string, album: string}){
+  const completeFolderTag = process.env.NODE_ENV === 'development' ? path.join('./music', folderTag) : path.join('/app/music', folderTag)
+  const albums = await searchAlbums(artist, album);
+  const releaseGroupId = albums[0].id;
+  await tagAlbumFromJson((await searchAlbum(releaseGroupId)), completeFolderTag);
+})
+
 export const listPlaylist = server$(async function(){
     const client = await getMpdClient(this);
     const list = await client?.api.playlists.get();
@@ -545,6 +714,29 @@ export const playLiveTwitch = server$(async function (channel: string) {
   await play();
 });
 
+export const executeCommand = server$(function (command: string, opts: string[]) {
+
+  const cmd = spawn(command, opts);
+
+  cmd.stdout.on("data", (data) => {
+    updateLog("stdout", `[${command.toUpperCase()}] ${data.toString()}`);
+  });
+
+  cmd.stderr.on("data", (data) => {
+    updateLog("stderr", `[${command.toUpperCase()}] ${data.toString()}`);
+  });
+
+  cmd.on("close", (code) => {
+    updateLog("stdout", `[${command.toUpperCase()}] Proceso finalizado con código ${code}\n`);
+  });
+
+  cmd.on('error', (err) => {
+    console.error(`Error en ${command}:`, err);
+    updateLog("stderr", `[${command.toUpperCase()}] Error: ${err.message}`);
+  });
+});
+
+
 export const executeSSHCommand = server$(function (command: 'shutdown' | 'reboot') {
   const host = this.env.get('SSH_HOST') || 'raspberry.casa';
   const user = this.env.get('SSH_USER') || 'miguel';
@@ -681,7 +873,7 @@ export const getChannelVideos = server$(async function(channelId: string): Promi
     console.log(`Error al consultar la API: ${response.status} ${response.statusText}`);
     return [];
   }
-  return await response.json();
+  return (await response.json()).items.map( (item: {snippet: YoutubeVideo}) => ({...item.snippet})) as YoutubeVideo[];
 })
 
 export const getChannelIdFromVideo = server$(async function(videoId: string) {

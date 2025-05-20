@@ -31,7 +31,7 @@ export default component$(( props : YoutubeVideoProps) => {
                 <img
                     width={100}
                     height={100}
-                    src={props.video.thumbnails.default?.url || props.video.thumbnails.medium?.url || props.video.thumbnails.high?.url}
+                    src={props.video.thumbnails.default.url || props.video.thumbnails.medium.url || props.video.thumbnails.high.url}
                     alt={props.video.title}
                     class="w-10 h-10 rounded"
                 />

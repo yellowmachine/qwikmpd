@@ -25,7 +25,7 @@ export {useFavorites} from '~/server/youtube'
 
 export const useVideos = routeLoader$(async (event) => {
   
-  const channelId = event.params.name || 'TU_CHANNEL_ID_POR_DEFECTO';
+  const channelId = event.params.name;
   
   if(!channelId)
     return []
@@ -60,19 +60,19 @@ export default component$(() => {
     <div>
       <h1 class="text-3xl text-brand-300 mb-4">Last videos</h1>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-            {videos.value.map((video) => (
-              <div class="border border-2 border-brand-300 rounded-md p-4"
-                key={video.videoId}
-              >
-                <YoutubeVideo 
-                  video={video}
-                  onAdd={$(() => onAdd(video))}
-                  onRemove={$(() => onRemove(video.channelId))}
-                  isFavorite={isFavorite(video.channelId)} 
-                />
-              </div>
-            ))}
-          </div>
+          {videos.value.map((video) => (
+            <div class="border border-2 border-brand-300 rounded-md p-4"
+              key={video.videoId}
+            >
+              <YoutubeVideo 
+                video={video}
+                onAdd={$(() => onAdd(video))}
+                onRemove={$(() => onRemove(video.channelId))}
+                isFavorite={isFavorite(video.channelId)} 
+              />
+            </div>
+          ))}
+      </div>
     </div>
   );
 });

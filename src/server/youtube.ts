@@ -1,5 +1,4 @@
 import { routeLoader$, server$ } from '@builder.io/qwik-city';
-//import type { Channel } from '~/server/db.server';
 
 export type Channel = {
   channelId: string;
