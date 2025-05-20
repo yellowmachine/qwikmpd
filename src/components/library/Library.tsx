@@ -70,7 +70,7 @@ export const Library = component$(({initialData, currentSong}: LibraryProps) => 
 
     const tagHere = $(async (releaseId: string) => {
         const folder = await currentFolder();
-        await tag({folderTag: folder, artist: artist.value, releaseId});
+        await tag({folderTag: folder, artist: groups.value[0]["artist-credit"][0].artist.name, releaseId});
         await loadAndRefresh$();
         showModalTagger.value = false;
         artist.value = '';

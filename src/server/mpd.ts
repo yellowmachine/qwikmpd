@@ -468,10 +468,11 @@ export interface Track {
 }
 
 
-function findBestFuzzyMatch(trackTitle: string, tracks: { title: string }[]) {
+function findBestFuzzyMatch(trackTitle: string, tracks: Track[]) {
     const titles = tracks.map(t => t.title);
     const result = fuzzball.extract(trackTitle, titles, { scorer: fuzzball.ratio, returnObjects: true, limit: 1 })[0];
-    if (result && result.score > 50) { // Ajusta el umbral según tu caso
+    
+    if (result && result.score > 40) { 
         return tracks.find(t => t.title === result.choice);
     }
     return undefined;
@@ -493,23 +494,20 @@ async function tagAlbum( albumArtist: string, albumData: ReleaseDetail, musicFol
     for (const filename of files) {
 
         const filepath = path.join(musicFolder, filename);
-        const trackTitle = findBestFuzzyMatch(filename, tracks);
+        const trackInfo = findBestFuzzyMatch(filename, tracks);
 
-        const trackInfo = tracks.find(
-            t => t.title.toLowerCase() === trackTitle?.title.toLowerCase()
-        );
         if (!trackInfo) {
-            console.log(`No match for ${filename}`);
+            console.log(`* No match for ${filename}`);
             continue;
         }
 
         const args = [
-          `-c 'set artist "${albumArtist}"'`,
-          `-c 'set album "${albumTitle}"'`,
-          `-c 'set title "${trackInfo.title}"'`,
-          `-c 'set tracknumber "${trackInfo.number}"'`,
-          `-c 'set date "${albumDate}"'`,
-          `"${filepath}"`
+          "-c", `set artist "${albumArtist}"`,
+          "-c", `set album "${albumTitle}"`,
+          "-c", `set title "${trackInfo.title}"`,
+          "-c", `set tracknumber "${trackInfo.number}"`,
+          "-c", `set date "${albumDate}"`,
+          filepath
         ];
 
         await executeCommand("kid3-cli", args);
@@ -756,7 +754,6 @@ export const downloadYoutubeAudio = server$(function (
 
 export const playLiveTwitch = server$(async function (channel: string) {
   const url = `http://app:3000/api/twitch/${channel}`;
-  //const url = `http://192.168.1.44:4173/api/twitch/${channel}`;
   await playUri(url);
   await play();
 });
