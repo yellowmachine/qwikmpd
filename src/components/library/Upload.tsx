@@ -1,4 +1,19 @@
-import { component$, useSignal } from '@builder.io/qwik';
+import { $, component$, useSignal } from '@builder.io/qwik';
+import { server$ } from '@builder.io/qwik-city';
+import { Client } from 'minio';
+
+export const getPresignedUrl = server$(async function(bucket, filename){
+  const minioClient = new Client({
+  endPoint: 'minio.casa',
+  port: 9000,
+  useSSL: false,
+  accessKey: this.env.get('MINIO_ROOT_USER'),
+  secretKey: this.env.get('MINIO_ROOT_PASSWORD'),
+});
+  const url = await minioClient.presignedPutObject(bucket, filename, 60 * 10); // 10 minutos de validez
+  return url;
+});
+
 
 interface UploadProps {
   base: string;
@@ -6,9 +21,19 @@ interface UploadProps {
 
 export const Upload =  component$<UploadProps>(({ base }) => {
   const status = useSignal<{ success: boolean; message: string } | null>(null);
+  const hasFiles = useSignal(false);
+  const counter = useSignal(0);
+  const totalFiles = useSignal(0);
 
-    const hasFiles = useSignal(false);
+  const put = $(async (file: File) => {
+    const url = await getPresignedUrl(base, file.name);
 
+    await fetch(url, {
+      method: 'PUT',
+      body: file,
+    });
+    counter.value++;
+  })
 
   return (
     <section>
@@ -18,23 +43,20 @@ export const Upload =  component$<UploadProps>(({ base }) => {
         class="flex flex-col gap-4"
         onSubmit$={async (ev) => {
           ev.preventDefault();
+          counter.value = 0;
           const form = ev.target as HTMLFormElement;
           const formData = new FormData(form);
-
+          const files = formData.getAll('files') as File[];
+          totalFiles.value = files.length;
+          const uploadPromises = files.map(file => put(file));
+          
           try {
-            const response = await fetch('/api/upload', {
-              method: 'POST',
-              body: formData,
-            });
-            const result = await response.json();
-            if (result.success) {
-              status.value = { success: true, message: result.message || 'Files uploaded successfully.' };
-              form.reset();
-            } else {
-              status.value = { success: false, message: result.error || 'Error uploading files.' };
-            }
+            await Promise.all(uploadPromises);
+            status.value = { success: true, message: 'Files uploaded!' };
+            console.log('¡Todos los archivos subidos!');
           } catch (error) {
-            status.value = { success: false, message: 'Error uploading files.' };
+            status.value = { success: false, message: 'Error uploading files' };
+            console.error('Error subiendo archivos:', error);
           }
         }}
       >
@@ -56,6 +78,11 @@ export const Upload =  component$<UploadProps>(({ base }) => {
           Upload files
         </button>
       </form>
+      {counter.value > 0 && (
+        <p class="text-sm text-gray-600">
+          {counter.value} file{counter.value > 1 ? 's' : ''} of {totalFiles.value} uploaded
+        </p>
+      )}
       {status.value && (
         <p class={status.value.success ? 'text-green-600' : 'text-red-600'}>
           {status.value.message}
