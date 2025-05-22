@@ -23,7 +23,7 @@ export const Primary: Story = {
                 total: 0
             }
           }
-          initialData={
+          data={
             {
                 file: [
                     {

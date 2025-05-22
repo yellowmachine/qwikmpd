@@ -1,5 +1,5 @@
 import { $, component$, useSignal, useTask$ } from "@builder.io/qwik";
-import { list, update, tag, tagOptions, type ReleaseGroup, type Release, searchGroupReleases } from "#mpd";
+import { list, update, type Release, searchGroupReleases } from "#mpd";
 import { SongList } from "../song/SongList";
 import type { Song } from '~/lib/types';
 import PlayHere from "../player/PlayHere";
@@ -7,6 +7,8 @@ import { ActionButton } from "../action-button/action-button";
 import { playUri, createFolder, downloadYoutubeAudio } from "#mpd";
 import { LuFolder, LuTrash2 } from "@qwikest/icons/lucide";
 import { useNavigate } from "@builder.io/qwik-city";
+import { Upload } from "./Upload";
+import { useLocation } from '@builder.io/qwik-city';
 
 
 const loadPath = async function(path: string){
@@ -20,7 +22,7 @@ const playThis = $(async function ({uri}: {pos: number, uri: string | undefined}
 })
 
 export interface LibraryProps {
-    initialData: {file: Song[], directory: string[]},
+    data: {file: Song[], directory: string[]},
     currentSong: {
         uri: string;
         elapsed: number;
@@ -28,21 +30,20 @@ export interface LibraryProps {
     }
 }
 
-export const Library = component$(({initialData, currentSong}: LibraryProps) => {
+export const Library = component$(({data, currentSong}: LibraryProps) => {
 
-    const history = useSignal<string[]>(['']);
-    const files = useSignal<Song[]>(initialData.file);
-    const directories = useSignal<string[]>(initialData.directory);
+    const loc = useLocation();
     const folderName = useSignal<string>('');
     const showModal = useSignal(false);
-    const showModalTagger = useSignal(false);
+    //const showModalTagger = useSignal(false);
     const urlInput = useSignal('');
     const navigate = useNavigate();
-    const artist = useSignal('');
-    const album = useSignal('');
-    const groups = useSignal<ReleaseGroup[]>([]);
+    //const artist = useSignal('');
+    //const album = useSignal('');
+    //const groups = useSignal<ReleaseGroup[]>([]);
     const activeGroupId = useSignal<string | null>(null);
     const releases = useSignal<Release[]>([]);
+
 
     const openModal = $(() => {
         urlInput.value = '';
@@ -54,7 +55,7 @@ export const Library = component$(({initialData, currentSong}: LibraryProps) => 
     });
 
     const currentFolder = $(() => {
-        return history.value[history.value.length - 1];
+        return loc.url.searchParams.get('path') || '';
     })
 
     const onAccept = $(async () => {
@@ -64,6 +65,7 @@ export const Library = component$(({initialData, currentSong}: LibraryProps) => 
         closeModal();
     });
 
+    /*
     const searchTags = $(async () => {
         groups.value = await tagOptions({artist: artist.value, album: album.value});
     });
@@ -79,28 +81,26 @@ export const Library = component$(({initialData, currentSong}: LibraryProps) => 
         groups.value = [];
         releases.value = [];
     })
-
+    */
     const goPath$ = $(async (path: string) => {
-        const result = await loadPath(path);
-        files.value = result.file;
-        directories.value = result.directory;
-        history.value = [...history.value, path];
+        navigate(`/library?path=${encodeURIComponent(path)}`);
     })
 
     const loadAndRefresh$ = $(async () => {
-        const result = await loadPath(history.value[history.value.length - 1]);
-        files.value = result.file;
-        directories.value = result.directory;
+        const result = await loadPath(await currentFolder());
+        data.file = result.file;
+        data.directory = result.directory;
     })
 
     const goBack$ = $(async () => {
-        history.value.pop();
-        await loadAndRefresh$();
+        loc.prevUrl ? window.history.back() : navigate('/')
     })
 
     const createFolder$ = $(async () => {
-        await createFolder(history.value[history.value.length - 1], folderName.value);
+        const base = await currentFolder()
+        await createFolder(base, folderName.value);
         await loadAndRefresh$();
+        await goPath$(`${base === "" ? "" : base + '/'}${folderName.value}`);
     })
 
     const updateLibrary = $(async () => {
@@ -120,8 +120,8 @@ export const Library = component$(({initialData, currentSong}: LibraryProps) => 
             <div class="flex items-center justify-between mb-4">
                 {/* PlayHere centrado verticalmente y al final */}
                 <div class="flex-1 flex justify-end">
-                    {files.value.length > 0 && 
-                    <PlayHere path={history.value[history.value.length - 1]} />
+                    {data.file.length > 0 && 
+                    <PlayHere path={loc.url.searchParams.get('path') || ''} />
                     }
                 </div>
                 {/* Botón Actualizar base de datos */}
@@ -131,6 +131,8 @@ export const Library = component$(({initialData, currentSong}: LibraryProps) => 
                         Update database
                     </button>
                     </ActionButton>
+                    <Upload base={loc.url.searchParams.get('path') || ''} />
+                    {/*
                     <button class="mb-2 cursor-pointer bg-brand-300 hover:bg-brand-300 p-2 rounded text-brand-500 text-xl ml-2" 
                         onClick$={$(() => showModalTagger.value = !showModalTagger.value)}>
                         {showModalTagger.value ? 'Close tagger' : 'Open tagger'}
@@ -180,6 +182,7 @@ export const Library = component$(({initialData, currentSong}: LibraryProps) => 
                             </ul>
                         </div>)}
                     </div>
+                    */}
                 </div>
                 <button
                     class="p-2 bg-blue-500 text-white rounded hover:bg-blue-700 ml-2 cursor-pointer"
@@ -226,7 +229,7 @@ export const Library = component$(({initialData, currentSong}: LibraryProps) => 
                     )}
                 </div>
             </div>
-            {history.value.length > 1 && 
+            {loc.url.searchParams.get('path') !== '' && loc.url.searchParams.get('path') !== null && 
                 <div class="p-2">
                     <button class="mb-2 p-2 cursor-pointer bg-brand-200 hover:bg-brand-300 text-white" onClick$={goBack$} >[..]</button>
                     <span class="mb-2 p-2 text-brand-500 text-xl">{currentFolder()}</span>
@@ -253,7 +256,7 @@ export const Library = component$(({initialData, currentSong}: LibraryProps) => 
                 </button>
                 </div>
             </div>
-            {directories.value.map((dir) => (
+            {data.directory.map((dir) => (
                 <div key={dir} class="mb-2 cursor-pointer bg-brand-300 hover:bg-brand-300 p-2 text-white text-xl">
                     <button class="cursor-pointer w-full" onClick$={() => goPath$(dir)}>
                         <LuFolder />{dir}<LuTrash2 />
@@ -261,7 +264,7 @@ export const Library = component$(({initialData, currentSong}: LibraryProps) => 
                 </div>
                 
             ))}
-            <SongList playThis={playThis} songs={files.value} currentSong={currentSong} />
+            <SongList playThis={playThis} songs={data.file} currentSong={currentSong} />
         </>
     );
 })
