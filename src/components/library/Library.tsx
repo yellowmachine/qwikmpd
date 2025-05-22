@@ -7,7 +7,7 @@ import { ActionButton } from "../action-button/action-button";
 import { playUri, createFolder, downloadYoutubeAudio } from "#mpd";
 import { LuFolder, LuTrash2 } from "@qwikest/icons/lucide";
 import { useNavigate } from "@builder.io/qwik-city";
-import { Upload } from "./Upload";
+//import { Upload } from "./Upload";
 import { useLocation } from '@builder.io/qwik-city';
 
 
@@ -131,7 +131,7 @@ export const Library = component$(({data, currentSong}: LibraryProps) => {
                         Update database
                     </button>
                     </ActionButton>
-                    <Upload base={loc.url.searchParams.get('path') || ''} />
+                    {/*<Upload base={loc.url.searchParams.get('path') || ''} />*/}
                     {/*
                     <button class="mb-2 cursor-pointer bg-brand-300 hover:bg-brand-300 p-2 rounded text-brand-500 text-xl ml-2" 
                         onClick$={$(() => showModalTagger.value = !showModalTagger.value)}>
