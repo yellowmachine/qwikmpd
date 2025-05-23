@@ -1,33 +1,6 @@
-import { $, component$, useSignal } from '@builder.io/qwik';
-import { server$ } from '@builder.io/qwik-city';
-import fs from 'fs';
-import path from 'path';
+import { component$, useSignal } from '@builder.io/qwik';
 
-export const onPost = server$(async function ({ request }) { // a porbar cuando tenga tiempo
-  // Obtener el formData del request
-  const formData = await request.formData();
-  const base = formData.get('base') as string;
-  const file = formData.get('file') as File;
 
-  if (!base || !file) {
-    return new Response(JSON.stringify({ error: 'Missing base or file' }), { status: 400 });
-  }
-
-  // Crear el directorio si no existe
-  const uploadDir = path.join('/app/music', base);
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
-  // Guardar el archivo
-  const dest = path.join(uploadDir, file.name);
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await fs.promises.writeFile(dest, buffer);
-
-  return new Response(JSON.stringify({ ok: true, filename: file.name }), {
-    headers: { 'Content-Type': 'application/json' },
-  });
-});
 interface UploadProps {
   base: string;
 }
@@ -40,54 +13,16 @@ export const Upload =  component$<UploadProps>(({ base }) => {
   const fileInputRef = useSignal<HTMLInputElement>();
   const selectedFiles = useSignal<string>('');
 
-   const put = $(async (file: File) => {
-      const formData = new FormData();
-      formData.append('base', base);
-      formData.append('file', file);
-      
-      const apiUrl = import.meta.env.PUBLIC_FIX_UPLOAD_URL;
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        body: formData,
-      });
-      if (!response.ok) {
-        throw new Error(`Error uploading ${file.name}`);
-      }
-      counter.value++;
-  });
 
   return (
     <section>
-      <form preventdefault:submit
-        class="flex flex-col gap-4"
-        onSubmit$={async () => {
-          counter.value = 0;
-          status.value = null;
-          const files = fileInputRef.value?.files;
-          if (!files || files.length === 0) {
-            // error
-            return;
-          }else{
-            totalFiles.value = files.length;
-            if (files.length === 0) {
-              status.value = { success: false, message: 'No files selected' };
-              return;
-            }
-
-            try {
-              await Promise.all(Array.from(files).map(file => put(file)));
-              status.value = { success: true, message: 'Files uploaded!' };
-              console.log('¡Todos los archivos subidos!');
-            } catch (error) {
-              status.value = { success: false, message: 'Error uploading files' };
-              console.error('Error subiendo archivos:', error);
-            }
-          }
-        }}
-      >
+      <form method="POST" 
+             action="/library/" 
+             enctype="multipart/form-data">
+        <input type="hidden" name="base" value={base} />
         <input
             type="file"
+            name="file"
             ref={fileInputRef}
             multiple
             class="hidden"
