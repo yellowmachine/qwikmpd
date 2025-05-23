@@ -1,19 +1,4 @@
 import { $, component$, useSignal } from '@builder.io/qwik';
-import { server$ } from '@builder.io/qwik-city';
-import { Client } from 'minio';
-
-export const getPresignedUrl = server$(async function(bucket, filename){
-  const minioClient = new Client({
-  endPoint: 'minio.casa',
-  port: 9000,
-  useSSL: false,
-  accessKey: this.env.get('MINIO_ROOT_USER'),
-  secretKey: this.env.get('MINIO_ROOT_PASSWORD'),
-});
-  const url = await minioClient.presignedPutObject(bucket, filename, 60 * 10); // 10 minutos de validez
-  return url;
-});
-
 
 interface UploadProps {
   base: string;
@@ -24,16 +9,24 @@ export const Upload =  component$<UploadProps>(({ base }) => {
   const hasFiles = useSignal(false);
   const counter = useSignal(0);
   const totalFiles = useSignal(0);
+  const fileInputRef = useSignal<HTMLInputElement>();
+  const selectedFiles = useSignal<string>('');
 
-  const put = $(async (file: File) => {
-    const url = await getPresignedUrl(base, file.name);
-
-    await fetch(url, {
-      method: 'PUT',
-      body: file,
-    });
-    counter.value++;
-  })
+   const put = $(async (file: File) => {
+      const formData = new FormData();
+      formData.append('base', base);
+      formData.append('file', file);
+      
+      const apiUrl = import.meta.env.PUBLIC_FIX_UPLOAD_URL;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error(`Error uploading ${file.name}`);
+      }
+      counter.value++;
+  });
 
   return (
     <section>
@@ -44,10 +37,17 @@ export const Upload =  component$<UploadProps>(({ base }) => {
         onSubmit$={async (ev) => {
           ev.preventDefault();
           counter.value = 0;
+          status.value = null;
           const form = ev.target as HTMLFormElement;
           const formData = new FormData(form);
           const files = formData.getAll('files') as File[];
           totalFiles.value = files.length;
+
+          if (files.length === 0) {
+            status.value = { success: false, message: 'No files selected' };
+            return;
+          }
+
           const uploadPromises = files.map(file => put(file));
           
           try {
@@ -61,16 +61,37 @@ export const Upload =  component$<UploadProps>(({ base }) => {
         }}
       >
         <input type="hidden" name="base" value={base} />
-        <input
-          type="file"
-          name="files"
-          multiple
-          class="block"
-           onChange$={(ev) => {
-            const input = ev.target as HTMLInputElement;
-            hasFiles.value = !!input.files && input.files.length > 0;
-          }}
-        />
+        <div
+          class="flex flex-col items-center justify-center border-2 border-dashed border-red-500 rounded-lg p-8 cursor-pointer transition hover:bg-red-50"
+          onClick$={() => fileInputRef.value?.click()}
+        >
+          <svg class="w-12 h-12 text-red-400 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          <span class="text-red-600 font-semibold text-lg">Click here to upload</span>
+          <span class="text-sm text-gray-500 mt-2">Supported formats: mp3, wav, etc.</span>
+          <input
+            type="file"
+            name="files"
+            ref={fileInputRef}
+            class="hidden"
+            multiple
+            onChange$={(ev) => {
+              const input = ev.target as HTMLInputElement;
+              hasFiles.value = !!input.files && input.files.length > 0;
+              if (input.files && input.files.length > 0) {
+                selectedFiles.value = Array.from(input.files).map(f => f.name).join(', ');
+              } else {
+                selectedFiles.value = '';
+              }
+            }}
+          />
+        </div>
+         {selectedFiles.value && (
+            <div class="mt-2 text-sm text-gray-700">
+              Archivos seleccionados: <span class="font-mono">{selectedFiles.value}</span>
+            </div>
+        )}
         <button disabled={!hasFiles.value}
           type="submit"
           class="disabled:opacity-50 disabled:cursor-not-allowed text-sm text-white bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
