@@ -118,18 +118,16 @@ export const Library = component$(({data, currentSong}: LibraryProps) => {
     return (
         <>
             <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between mb-4 gap-4">
-                {/* PlayHere centrado verticalmente y al final */}
-                <div class="flex-1 flex justify-end">
-                    {data.file.length > 0 && 
-                    <PlayHere path={loc.url.searchParams.get('path') || ''} />
-                    }
-                </div>
-                {/* Botón Actualizar base de datos */}
                 <div class="text-brand-300">
+                    <div class="flex-1 flex">
+                        {data.file.length > 0 && 
+                        <PlayHere path={loc.url.searchParams.get('path') || ''} />
+                        }
+                    </div>
                     <ActionButton action={$(() => updateLibrary())} successMessage="ok">
-                    <button class="mb-2 cursor-pointer bg-brand-300 hover:bg-brand-300 p-2 rounded text-brand-500 text-xl ml-2">
-                        Update database
-                    </button>
+                        <button class="mb-2 cursor-pointer bg-brand-300 hover:bg-brand-300 p-2 rounded text-brand-500 text-xl ml-2">
+                            Update database
+                        </button>
                     </ActionButton>
                     <Upload base={loc.url.searchParams.get('path') || ''} />
                 </div>
