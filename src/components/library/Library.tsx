@@ -7,7 +7,7 @@ import { ActionButton } from "../action-button/action-button";
 import { playUri, createFolder, downloadYoutubeAudio } from "#mpd";
 import { LuFolder, LuTrash2 } from "@qwikest/icons/lucide";
 import { useNavigate } from "@builder.io/qwik-city";
-//import { Upload } from "./Upload";
+import { Upload } from "./Upload";
 import { useLocation } from '@builder.io/qwik-city';
 
 
@@ -117,7 +117,7 @@ export const Library = component$(({data, currentSong}: LibraryProps) => {
 
     return (
         <>
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between mb-4 gap-4">
                 {/* PlayHere centrado verticalmente y al final */}
                 <div class="flex-1 flex justify-end">
                     {data.file.length > 0 && 
@@ -131,58 +131,7 @@ export const Library = component$(({data, currentSong}: LibraryProps) => {
                         Update database
                     </button>
                     </ActionButton>
-                    {/*<Upload base={loc.url.searchParams.get('path') || ''} />*/}
-                    {/*
-                    <button class="mb-2 cursor-pointer bg-brand-300 hover:bg-brand-300 p-2 rounded text-brand-500 text-xl ml-2" 
-                        onClick$={$(() => showModalTagger.value = !showModalTagger.value)}>
-                        {showModalTagger.value ? 'Close tagger' : 'Open tagger'}
-                    </button>
-                    <div class="relative">
-                        {showModalTagger.value && (
-                        <div class="absolute right-0 top-full mt-2 z-50 bg-white p-4 rounded shadow-lg max-w-md w-full">
-                            <input placeholder="Artist" type="text" class="mt-2 mb-2 w-full p-2 border rounded text-gray-800 border-2 border-brand-300" value={artist.value} onInput$={$((e) => {
-                                const target = e.target as HTMLInputElement;
-                                artist.value = target.value;
-                            })} />
-                            <input placeholder="Album" class="mt-2 mb-2 w-full p-2 border rounded text-gray-800 border-2 border-brand-300" type="text" value={album.value} onInput$={$((e) => {
-                                const target = e.target as HTMLInputElement;
-                                album.value = target.value;
-                            })}/>
-                            <button class="p-2 bg-yellow-500 text-white rounded hover:bg-yellow-700 ml-2 cursor-pointer"
-                                 onClick$={searchTags}>
-                                    Search
-                            </button>
-                            {groups.value.length === 0 && (<div class="mt-2 text-gray-600">No results</div>)}
-                            <ul>
-                                {groups.value.map((group) => (
-                                    <li key={group.id} class="p-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded mb-2">
-                                        <span class="text-gray-600">{group.title} / {group["first-release-date"]}</span>
-                                        <button class="cursor-pointer w-full bg-blue-500 hover:bg-blue-700 text-white rounded"
-                                            onClick$={$(() => {
-                                                activeGroupId.value = group.id;
-                                            })}>
-                                            Expand</button>
-                                            {activeGroupId.value === group.id && (
-                                            <ul class="ml-4">
-                                                {releases.value.map((release) => (
-                                                    <li key={release.id} class="p-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded mb-2">
-                                                        <span class="text-gray-600">{release.title} / {release.country} / {release.date}</span>
-                                                        <button class="cursor-pointer w-full bg-blue-500 hover:bg-blue-700 text-white rounded"
-                                                            onClick$={$(() => {
-                                                                tagHere(release.id);
-                                                            })}>
-                                                                Tag
-                                                        </button>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                            )}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>)}
-                    </div>
-                    */}
+                    <Upload base={loc.url.searchParams.get('path') || ''} />
                 </div>
                 <button
                     class="p-2 bg-blue-500 text-white rounded hover:bg-blue-700 ml-2 cursor-pointer"
