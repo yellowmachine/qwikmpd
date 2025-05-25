@@ -17,6 +17,7 @@ const loadPath = async function(path: string){
 }
 
 const playThis = $(async function ({uri}: {pos: number, uri: string | undefined}){
+    console.log('playThis', uri);
     if(uri)
         await playUri(uri);
 })
