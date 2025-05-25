@@ -97,6 +97,7 @@ export type StatusData = {
     name: string;
     title: string;
     uri?: string;
+    file?: string;
     album?: string;
     time: string | number;
 };

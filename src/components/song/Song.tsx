@@ -22,7 +22,7 @@ export const Song = component$<SongProps>(( {song, currentSong, pos, playThis} )
 
 
     const playThisSong = $(async () => {
-        await playThis({pos, uri: song.uri});
+        await playThis({pos, uri: song.uri || song.file});
         
         state.clicked = true;
         setTimeout(() => {
