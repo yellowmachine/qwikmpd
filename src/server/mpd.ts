@@ -839,8 +839,8 @@ export const updateAppViaSSHStream = server$(function (){
         updateLog("stderr", data.toString());
     });
 
-    ssh.on("close", (code) => {
-        updateLog("stdout", `Proceso finalizado con código ${code}\n`);
+    ssh.on("close", async (code) => {
+      updateLog("stdout", `Proceso finalizado con código ${code}\n`);
     });
 
     ssh.on('error', (err) => {
