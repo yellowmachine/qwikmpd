@@ -4,7 +4,7 @@ import { updateAppViaSSHStream } from '~/server/mpd';
 export const onPost: RequestHandler = async ({ request, json }) => {
   try {
     const body = await request.json();
-    if(body && body.nv) {
+    if(body && body.commit) {
         await updateAppViaSSHStream();
         json(200, { success: true, message: 'Updating...'});
     }else{
