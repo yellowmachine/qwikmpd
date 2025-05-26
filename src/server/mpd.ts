@@ -824,7 +824,6 @@ export const updateAppViaSSHStream = server$(function (){
     const host = this.env.get('SSH_HOST') || 'raspberry';
     const user = this.env.get('SSH_USER') || 'miguel';
     const scriptPath = this.env.get('SCRIPT_UPDATE_APP_PATH') || '/home/miguel/platform/pimpd/update.sh';
-    let remoteStdout = "";
 
     if(!scriptPath) {
         throw "No se ha configurado la ruta del script de actualización";
@@ -833,9 +832,7 @@ export const updateAppViaSSHStream = server$(function (){
     const ssh = spawn("ssh", [`${user}@${host}`, scriptPath]);
 
     ssh.stdout.on("data", (data) => {
-        const chunk = data.toString();
-        remoteStdout += chunk;
-        updateLog("stdout", chunk);
+        updateLog("stdout", data.toString());
     });
 
     ssh.stderr.on("data", (data) => {
@@ -843,18 +840,7 @@ export const updateAppViaSSHStream = server$(function (){
     });
 
     ssh.on("close", async (code) => {
-      if(code === 0){
-        const shaRegex = /^SHA_OUTPUT:([a-f0-9]{40})$/mi;
-        const match = remoteStdout.match(shaRegex);
-        if(match && match[1]){
-          await fs.writeFile("/app/data/current_deployed_sha.txt", match[1], 'utf8');
-        }else{
-          console.warn("No se encontró el SHA en la salida del script de actualización");
-        }
-        updateLog("stdout", `Proceso finalizado con código ${code}\n`);
-      }else{
-        updateLog("stdout", `Proceso finalizado con código ${code}\n`);
-      }
+      updateLog("stdout", `Proceso finalizado con código ${code}\n`);
     });
 
     ssh.on('error', (err) => {
